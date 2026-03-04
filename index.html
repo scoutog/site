@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scout OG</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #111935;
+      --text: #f4f7ff;
+      --muted: #a4b1d6;
+      --accent: #5eead4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top, #16234a 0%, var(--bg) 60%);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    main {
+      width: min(680px, 100%);
+      background: #111935;
+      border: 1px solid #2b3f7a;
+      border-radius: 16px;
+      padding: 36px;
+      box-shadow: 0 18px 50px rgb(0 0 0 / 35%);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.8vw, 1.15rem);
+    }
+
+    .accent {
+      color: var(--accent);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Hello, world.</h1>
+    <p>This is the first live page for <span class="accent">scout-og.com</span>.</p>
+  </main>
+</body>
+</html>
