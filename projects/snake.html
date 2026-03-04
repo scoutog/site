@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project 01: Snake | Scout OG</title>
+  <title>Snake | Scout OG</title>
   <link rel="stylesheet" href="/styles.css?v=4">
   <style>
     .snake-layout {
@@ -24,10 +24,12 @@
       margin-bottom: 0.8rem;
     }
 
-    .snake-metrics {
+    .snake-metrics,
+    .snake-pickers {
       display: flex;
       gap: 0.55rem;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     .chip {
@@ -45,7 +47,8 @@
       flex-wrap: wrap;
     }
 
-    button {
+    button,
+    select {
       border: 1px solid var(--line);
       background: linear-gradient(165deg, #12213b, #152846);
       color: var(--text);
@@ -53,11 +56,28 @@
       padding: 0.42rem 0.78rem;
       font: inherit;
       font-size: 0.9rem;
+    }
+
+    button {
       cursor: pointer;
     }
 
-    button:hover {
+    button:hover,
+    select:hover {
       border-color: #35527d;
+    }
+
+    .color-picker {
+      width: 54px;
+      text-align: center;
+      padding-left: 0.55rem;
+      padding-right: 0.55rem;
+      cursor: pointer;
+    }
+
+    .color-picker option {
+      font-size: 1.05rem;
+      text-align: center;
     }
 
     .snake-board-wrap {
@@ -107,8 +127,9 @@
     <div class="nav-wrap">
       <a class="brand" href="/">Scout OG</a>
       <nav class="nav-links" aria-label="Primary">
-        <a href="/">Landing</a>        <a href="/daily-brief.html">Daily Brief</a>
-        <a class="active" href="/projects/project-01.html">Project 01</a>
+        <a href="/">Landing</a>
+        <a href="/daily-brief.html">Daily Brief</a>
+        <a class="active" href="/projects/snake.html">Snake</a>
         <a href="/projects/project-02.html">Project 02</a>
         <a href="/projects/project-03.html">Project 03</a>
         <a href="/projects/project-04.html">Project 04</a>
@@ -121,8 +142,8 @@
   <main class="page">
     <article class="panel snake-layout">
       <span class="kicker">Classic Game</span>
-      <h1 class="snake-headline">Project 01: Snake</h1>
-      <p class="lead">Use arrow keys or WASD to move. Eat food, grow longer, and avoid walls and your own tail.</p>
+      <h1 class="snake-headline">Snake</h1>
+      <p class="lead">Use arrow keys or WASD to move. Any movement key starts the game. Avoid walls and your own tail.</p>
 
       <div class="snake-topbar">
         <div class="snake-metrics">
@@ -134,6 +155,28 @@
           <button id="start-btn" type="button">Start</button>
           <button id="restart-btn" type="button">Restart</button>
         </div>
+      </div>
+
+      <div class="snake-pickers" aria-label="Color pickers">
+        <span class="chip">Snake</span>
+        <select id="snake-color" class="color-picker" title="Snake color" aria-label="Snake color">
+          <option value="#7cf7d2" style="color:#7cf7d2">&#9632;</option>
+          <option value="#56d4ff" style="color:#56d4ff">&#9632;</option>
+          <option value="#f97316" style="color:#f97316">&#9632;</option>
+          <option value="#ef4444" style="color:#ef4444">&#9632;</option>
+          <option value="#a855f7" style="color:#a855f7">&#9632;</option>
+          <option value="#facc15" style="color:#facc15">&#9632;</option>
+        </select>
+
+        <span class="chip">Food</span>
+        <select id="food-color" class="color-picker" title="Food color" aria-label="Food color">
+          <option value="#56d4ff" style="color:#56d4ff">&#9632;</option>
+          <option value="#f43f5e" style="color:#f43f5e">&#9632;</option>
+          <option value="#facc15" style="color:#facc15">&#9632;</option>
+          <option value="#22c55e" style="color:#22c55e">&#9632;</option>
+          <option value="#a855f7" style="color:#a855f7">&#9632;</option>
+          <option value="#fb923c" style="color:#fb923c">&#9632;</option>
+        </select>
       </div>
 
       <div class="snake-board-wrap">
@@ -162,6 +205,8 @@
       const stateEl = document.getElementById("state");
       const startBtn = document.getElementById("start-btn");
       const restartBtn = document.getElementById("restart-btn");
+      const snakeColorSelect = document.getElementById("snake-color");
+      const foodColorSelect = document.getElementById("food-color");
 
       const tileSize = 24;
       const tiles = board.width / tileSize;
@@ -174,7 +219,11 @@
       let food;
       let score;
       let loopId;
-      let running;
+      let running = false;
+      let gameOver = false;
+
+      let snakeColor = snakeColorSelect.value;
+      let foodColor = foodColorSelect.value;
 
       function randomCell() {
         return {
@@ -198,7 +247,6 @@
       function loadBest() {
         const value = Number(localStorage.getItem(bestKey) || "0");
         bestEl.textContent = String(value);
-        return value;
       }
 
       function saveBest(value) {
@@ -207,6 +255,18 @@
           localStorage.setItem(bestKey, String(value));
           bestEl.textContent = String(value);
         }
+      }
+
+      function clamp(value) {
+        return Math.max(0, Math.min(255, value));
+      }
+
+      function shade(hex, amount) {
+        const raw = hex.replace("#", "");
+        const r = clamp(parseInt(raw.slice(0, 2), 16) + amount);
+        const g = clamp(parseInt(raw.slice(2, 4), 16) + amount);
+        const b = clamp(parseInt(raw.slice(4, 6), 16) + amount);
+        return "#" + [r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("");
       }
 
       function resetGame() {
@@ -218,6 +278,8 @@
         dir = { x: 1, y: 0 };
         nextDir = { x: 1, y: 0 };
         score = 0;
+        running = false;
+        gameOver = false;
         scoreEl.textContent = "0";
         placeFood();
         setState("Ready");
@@ -251,9 +313,10 @@
 
       function draw() {
         drawGrid();
-        drawCell(food.x, food.y, "#56d4ff");
+        drawCell(food.x, food.y, foodColor);
+        const bodyColor = shade(snakeColor, -55);
         snake.forEach((part, idx) => {
-          drawCell(part.x, part.y, idx === 0 ? "#7cf7d2" : "#2db487");
+          drawCell(part.x, part.y, idx === 0 ? snakeColor : bodyColor);
         });
       }
 
@@ -271,6 +334,7 @@
 
         if (collide(nextHead)) {
           running = false;
+          gameOver = true;
           clearInterval(loopId);
           setState("Game Over");
           saveBest(score);
@@ -291,9 +355,6 @@
       }
 
       function setDirection(dx, dy) {
-        if (!running) {
-          return;
-        }
         if (dx === -dir.x && dy === -dir.y) {
           return;
         }
@@ -304,42 +365,76 @@
         if (running) {
           return;
         }
+
+        if (gameOver) {
+          resetGame();
+        }
+
         running = true;
         setState("Running");
+        clearInterval(loopId);
         loopId = setInterval(tick, speed);
       }
 
       function restartGame() {
         clearInterval(loopId);
-        running = false;
         resetGame();
+      }
+
+      function directionFromKey(key) {
+        if (key === "arrowup" || key === "w") return { x: 0, y: -1 };
+        if (key === "arrowdown" || key === "s") return { x: 0, y: 1 };
+        if (key === "arrowleft" || key === "a") return { x: -1, y: 0 };
+        if (key === "arrowright" || key === "d") return { x: 1, y: 0 };
+        return null;
       }
 
       document.addEventListener("keydown", (event) => {
         const key = event.key.toLowerCase();
-        if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(key)) {
+        const mapped = directionFromKey(key);
+
+        if (mapped) {
           event.preventDefault();
+          if (!running) {
+            startGame();
+          }
+          setDirection(mapped.x, mapped.y);
+          return;
         }
 
         if (!running && key === " ") {
           startGame();
-          return;
         }
-
-        if (key === "arrowup" || key === "w") setDirection(0, -1);
-        if (key === "arrowdown" || key === "s") setDirection(0, 1);
-        if (key === "arrowleft" || key === "a") setDirection(-1, 0);
-        if (key === "arrowright" || key === "d") setDirection(1, 0);
       });
 
       document.querySelectorAll("[data-dir]").forEach((button) => {
         button.addEventListener("click", () => {
           const dirName = button.getAttribute("data-dir");
-          if (dirName === "up") setDirection(0, -1);
-          if (dirName === "down") setDirection(0, 1);
-          if (dirName === "left") setDirection(-1, 0);
-          if (dirName === "right") setDirection(1, 0);
+          const map = {
+            up: { x: 0, y: -1 },
+            down: { x: 0, y: 1 },
+            left: { x: -1, y: 0 },
+            right: { x: 1, y: 0 }
+          };
+          const mapped = map[dirName];
+          if (!mapped) {
+            return;
+          }
+          if (!running) {
+            startGame();
+          }
+          setDirection(mapped.x, mapped.y);
         });
+      });
+
+      snakeColorSelect.addEventListener("change", function () {
+        snakeColor = snakeColorSelect.value;
+        draw();
+      });
+
+      foodColorSelect.addEventListener("change", function () {
+        foodColor = foodColorSelect.value;
+        draw();
       });
 
       startBtn.addEventListener("click", startGame);
@@ -351,3 +446,4 @@
   </script>
 </body>
 </html>
+
