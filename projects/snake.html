@@ -94,6 +94,11 @@
       cursor: pointer;
     }
 
+    .color-picker option {
+      color: #0b1020;
+    }
+
+
 .snake-board-wrap {
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -291,8 +296,8 @@
         const g = parseInt(raw.slice(2, 4), 16);
         const b = parseInt(raw.slice(4, 6), 16);
         const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-        selectEl.style.background = hex;
-        selectEl.style.color = luminance > 0.55 ? "#0b1020" : "#ffffff";
+        selectEl.style.background = "#13233d";
+        selectEl.style.color = "#ffffff";
         selectEl.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
         const wrapper = selectEl.closest(".color-box");
         if (wrapper) {
