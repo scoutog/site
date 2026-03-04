@@ -632,19 +632,28 @@ ul {
 
 /* Daily Brief v9 layout */
 .weather-primary {
-  grid-column: span 8;
+  grid-column: 1 / span 8;
+  grid-row: 1 / span 2;
 }
 
 .word-side {
-  grid-column: span 4;
+  grid-column: 9 / span 4;
+  grid-row: 1;
 }
 
 .onthisday-bottom {
-  grid-column: span 6;
+  grid-column: 9 / span 4;
+  grid-row: 2;
+}
+
+.news-card-wide {
+  grid-column: 1 / -1;
+  grid-row: 3;
 }
 
 .comic-bottom {
-  grid-column: span 6;
+  grid-column: 1 / -1;
+  grid-row: 4;
 }
 
 .news-grid {
@@ -654,9 +663,11 @@ ul {
 @media (max-width: 1100px) {
   .weather-primary,
   .word-side,
+  .news-card-wide,
   .onthisday-bottom,
   .comic-bottom {
     grid-column: span 12;
+    grid-row: auto;
   }
 }
 

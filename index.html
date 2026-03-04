@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -63,17 +63,17 @@
         <p id="word-of-day">Loading word...</p>
       </article>
 
+      <article class="panel brief-card onthisday-bottom">
+        <h2>On This Day</h2>
+        <p id="on-this-day">Loading fact...</p>
+      </article>
+
       <article class="panel brief-card news-card-wide">
         <div class="brief-card-head">
           <h2>Top Stories (Past 24 Hours)</h2>
           <p class="brief-sub">Priority coverage: U.S., Politics, and World; plus major Business/Tech when relevant.</p>
         </div>
         <div id="news-grid" class="news-grid"></div>
-      </article>
-
-      <article class="panel brief-card onthisday-bottom">
-        <h2>On This Day</h2>
-        <p id="on-this-day">Loading fact...</p>
       </article>
 
       <article class="panel brief-card comic-card comic-bottom">
@@ -242,22 +242,23 @@
         const maxTemp = Math.max.apply(null, temps);
         const minTemp = Math.min.apply(null, temps);
 
-        ctx.font = "14px Space Grotesk, Segoe UI, sans-serif";
+        ctx.font = "700 20px Space Grotesk, Segoe UI, sans-serif";
         ctx.textAlign = "center";
         data.forEach(function (entry, idx) {
           const show = idx % 2 === 0 || entry.temp === maxTemp || entry.temp === minTemp || idx === data.length - 1;
           if (!show) return;
           const x = sampledWeather[idx].x;
-          const y = yTemp(entry.temp) - 8;
+          const y = yTemp(entry.temp) - 10;
           ctx.fillStyle = "#c7eeff";
-          ctx.fillText(Math.round(entry.temp) + "°", x, y);
+          ctx.fillText(Math.round(entry.temp) + "�", x, y);
         });
 
-        ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
         data.forEach(function (entry, idx) {
           const x = sampledWeather[idx].x;
+          ctx.font = "24px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Space Grotesk, sans-serif";
           ctx.fillStyle = "#9db0d6";
           ctx.fillText(weatherCodeToIcon(entry.code), x, height - 30);
+          ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
           ctx.fillStyle = "#7f92ba";
           ctx.fillText(entry.label, x, height - 13);
         });
@@ -506,3 +507,11 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
