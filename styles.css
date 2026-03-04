@@ -683,6 +683,8 @@ ul {
 
 .market-item {
   border: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
   border-radius: 12px;
   background: linear-gradient(165deg, #0b172b, #0d1c34);
   padding: 0.6rem 0.65rem;
@@ -731,6 +733,15 @@ ul {
 
 .market-item.flat .market-change {
   color: #93c5fd;
+}
+
+.market-item:hover {
+  border-color: #3a5b8b;
+}
+
+.market-item:focus-visible {
+  outline: 2px solid #4e7bc0;
+  outline-offset: 2px;
 }
 
 .news-grid {

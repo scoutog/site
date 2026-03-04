@@ -575,8 +575,11 @@
         marketListEl.innerHTML = "";
 
         rows.forEach(function (row) {
-          const card = document.createElement("article");
+          const card = document.createElement("a");
           card.className = "market-item " + row.tone;
+          card.href = "https://finance.yahoo.com/quote/" + encodeURIComponent(row.symbol);
+          card.target = "_blank";
+          card.rel = "noopener noreferrer";
           card.innerHTML =
             '<div class="market-top"><span class="market-symbol">' + row.symbol + '</span><span class="market-price">$' + row.price.toFixed(2) + '</span></div>' +
             '<div class="market-change">' + formatSigned(row.change) + ' (' + formatSigned(row.pct) + '%)</div>' +
