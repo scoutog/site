@@ -87,8 +87,28 @@
       <article class="panel brief-card market-side">
         <h2>Market Snapshot (1D)</h2>
         <p class="brief-sub">SPY, VOO, NKE</p>
-        <div id="market-list" class="market-list">
-          <p class="brief-sub">Loading quotes...</p>
+        <div class="tradingview-widget-container market-widget">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+          {
+            "width": "100%",
+            "height": 260,
+            "symbolsGroups": [
+              {
+                "name": "U.S. ETFs & Equity",
+                "symbols": [
+                  { "name": "AMEX:SPY", "displayName": "SPY" },
+                  { "name": "AMEX:VOO", "displayName": "VOO" },
+                  { "name": "NYSE:NKE", "displayName": "NKE" }
+                ]
+              }
+            ],
+            "showSymbolLogo": false,
+            "isTransparent": true,
+            "colorTheme": "dark",
+            "locale": "en"
+          }
+          </script>
         </div>
       </article>
     </section>
@@ -112,7 +132,6 @@
       const comicTitleEl = document.getElementById("comic-title");
       const comicLinkEl = document.getElementById("comic-link");
       const comicImageEl = document.getElementById("comic-image");
-      const marketListEl = document.getElementById("market-list");
 
       const now = new Date();
       const sampledWeather = [];
@@ -490,52 +509,6 @@
           setWordDefinition(chosen, "definition unavailable right now.");
         }
       }
-
-      function formatSigned(value, digits) {
-        const n = Number(value || 0);
-        const fixed = n.toFixed(digits);
-        return (n > 0 ? "+" : "") + fixed;
-      }
-
-      async function loadMarkets() {
-        const symbols = ["SPY", "VOO", "NKE"];
-        const url = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=" + encodeURIComponent(symbols.join(","));
-
-        try {
-          const response = await fetch(url, { cache: "no-store" });
-          if (!response.ok) throw new Error("quote failed");
-          const data = await response.json();
-          const results = (data.quoteResponse && data.quoteResponse.result) || [];
-          if (!results.length) throw new Error("quote empty");
-
-          const bySymbol = {};
-          results.forEach(function (row) { bySymbol[row.symbol] = row; });
-
-          marketListEl.innerHTML = "";
-          symbols.forEach(function (symbol) {
-            const row = bySymbol[symbol];
-            if (!row) return;
-            const price = Number(row.regularMarketPrice || 0);
-            const change = Number(row.regularMarketChange || 0);
-            const pct = Number(row.regularMarketChangePercent || 0);
-            const tone = change > 0 ? "up" : (change < 0 ? "down" : "flat");
-
-            const item = document.createElement("div");
-            item.className = "market-item " + tone;
-            item.innerHTML =
-              "<div class=\"market-symbol\">" + symbol + "</div>" +
-              "<div class=\"market-price\">$" + price.toFixed(2) + "</div>" +
-              "<div class=\"market-change\">" + formatSigned(change, 2) + " (" + formatSigned(pct, 2) + "%)</div>";
-            marketListEl.appendChild(item);
-          });
-
-          if (!marketListEl.children.length) {
-            throw new Error("symbols unavailable");
-          }
-        } catch (_) {
-          marketListEl.innerHTML = "<p class=\"brief-sub\">Market data is unavailable right now. Refresh shortly.</p>";
-        }
-      }
       async function loadComic() {
         try {
           const response = await fetch("https://xkcd.vercel.app/?comic=latest");
@@ -565,7 +538,6 @@
       loadOnThisDay();
       loadWordOfDay();
       loadComic();
-      loadMarkets();
     })();
   </script>
 </body>
