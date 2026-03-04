@@ -677,32 +677,48 @@ ul {
 
 .market-list {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.55rem;
   margin-top: 0.5rem;
 }
 
 .market-item {
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #0c1629;
-  padding: 0.55rem 0.6rem;
+  border-radius: 12px;
+  background: linear-gradient(165deg, #0b172b, #0d1c34);
+  padding: 0.6rem 0.65rem;
   display: grid;
-  gap: 0.2rem;
+  gap: 0.35rem;
+}
+
+.market-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .market-symbol {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
   color: var(--muted);
+  font-weight: 700;
 }
 
 .market-price {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .market-change {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.market-spark {
+  width: 100%;
+  height: 34px;
+  display: block;
 }
 
 .market-item.up .market-change {

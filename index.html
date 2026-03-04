@@ -87,28 +87,8 @@
       <article class="panel brief-card market-side">
         <h2>Market Snapshot (1D)</h2>
         <p class="brief-sub">SPY, VOO, NKE</p>
-        <div class="tradingview-widget-container market-widget">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
-          {
-            "width": "100%",
-            "height": 260,
-            "symbolsGroups": [
-              {
-                "name": "U.S. ETFs & Equity",
-                "symbols": [
-                  { "name": "AMEX:SPY", "displayName": "SPY" },
-                  { "name": "AMEX:VOO", "displayName": "VOO" },
-                  { "name": "NYSE:NKE", "displayName": "NKE" }
-                ]
-              }
-            ],
-            "showSymbolLogo": false,
-            "isTransparent": true,
-            "colorTheme": "dark",
-            "locale": "en"
-          }
-          </script>
+        <div id="market-list" class="market-list">
+          <p class="brief-sub">Loading market snapshot...</p>
         </div>
       </article>
     </section>
@@ -132,6 +112,7 @@
       const comicTitleEl = document.getElementById("comic-title");
       const comicLinkEl = document.getElementById("comic-link");
       const comicImageEl = document.getElementById("comic-image");
+      const marketListEl = document.getElementById("market-list");
 
       const now = new Date();
       const sampledWeather = [];
@@ -521,6 +502,101 @@
           setWordDefinition(chosen, "definition unavailable right now.");
         }
       }
+      function formatSigned(value) {
+        return (value > 0 ? "+" : "") + value.toFixed(2);
+      }
+
+      function miniSparkline(values, tone) {
+        const points = values.filter(function (n) { return Number.isFinite(n); });
+        if (points.length < 3) {
+          return "";
+        }
+
+        const width = 130;
+        const height = 34;
+        const min = Math.min.apply(null, points);
+        const max = Math.max.apply(null, points);
+        const span = Math.max(0.0001, max - min);
+
+        const coords = points.map(function (v, i) {
+          const x = (i / Math.max(1, points.length - 1)) * width;
+          const y = height - ((v - min) / span) * (height - 2) - 1;
+          return x.toFixed(1) + "," + y.toFixed(1);
+        }).join(" ");
+
+        const stroke = tone === "up" ? "#6ee7b7" : (tone === "down" ? "#fca5a5" : "#93c5fd");
+        return '<svg class="market-spark" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + coords + '" fill="none" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round"/></svg>';
+      }
+
+      async function fetchYahooChart(symbol) {
+        const url = "https://query2.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(symbol) + "?range=2d&interval=5m";
+
+        try {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) throw new Error("direct fetch failed");
+          return await response.json();
+        } catch (_) {
+          const proxy = "https://r.jina.ai/http://query2.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(symbol) + "?range=2d&interval=5m";
+          const fallbackResponse = await fetch(proxy, { cache: "no-store" });
+          if (!fallbackResponse.ok) throw new Error("fallback fetch failed");
+          const raw = await fallbackResponse.text();
+          const start = raw.indexOf("{");
+          if (start === -1) throw new Error("fallback parse failed");
+          return JSON.parse(raw.slice(start));
+        }
+      }
+
+      function parseYahooQuote(symbol, payload) {
+        const result = payload && payload.chart && payload.chart.result && payload.chart.result[0];
+        if (!result) return null;
+
+        const meta = result.meta || {};
+        const closes = (result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close) || [];
+        const points = closes.filter(function (v) { return Number.isFinite(v); });
+        if (!points.length) return null;
+
+        const price = points[points.length - 1];
+        const prev = Number(meta.chartPreviousClose || meta.previousClose || points[0]);
+        const change = price - prev;
+        const pct = prev ? (change / prev) * 100 : 0;
+        const tone = change > 0 ? "up" : (change < 0 ? "down" : "flat");
+
+        return {
+          symbol: symbol,
+          price: price,
+          change: change,
+          pct: pct,
+          tone: tone,
+          spark: points.slice(-78)
+        };
+      }
+
+      function renderMarkets(rows) {
+        marketListEl.innerHTML = "";
+
+        rows.forEach(function (row) {
+          const card = document.createElement("article");
+          card.className = "market-item " + row.tone;
+          card.innerHTML =
+            '<div class="market-top"><span class="market-symbol">' + row.symbol + '</span><span class="market-price">$' + row.price.toFixed(2) + '</span></div>' +
+            '<div class="market-change">' + formatSigned(row.change) + ' (' + formatSigned(row.pct) + '%)</div>' +
+            miniSparkline(row.spark, row.tone);
+          marketListEl.appendChild(card);
+        });
+      }
+
+      async function loadMarkets() {
+        const symbols = ["SPY", "VOO", "NKE"];
+
+        try {
+          const payloads = await Promise.all(symbols.map(function (s) { return fetchYahooChart(s); }));
+          const rows = payloads.map(function (payload, i) { return parseYahooQuote(symbols[i], payload); }).filter(Boolean);
+          if (!rows.length) throw new Error("empty market rows");
+          renderMarkets(rows);
+        } catch (_) {
+          marketListEl.innerHTML = '<p class="brief-sub">Market snapshot unavailable right now. Try refresh in a moment.</p>';
+        }
+      }
       async function loadComic() {
         try {
           const response = await fetch("https://xkcd.vercel.app/?comic=latest");
@@ -549,6 +625,7 @@
       loadNews();
       loadOnThisDay();
       loadWordOfDay();
+      loadMarkets();
       loadComic();
     })();
   </script>
