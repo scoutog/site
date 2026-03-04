@@ -3,162 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Scout OG | Projects Hub</title>
-  <style>
-    :root {
-      --bg: #090c1a;
-      --surface: #121933;
-      --surface-2: #1a2549;
-      --text: #f4f7ff;
-      --muted: #a2afd4;
-      --line: #2a396d;
-      --accent: #69f0d1;
-      --accent-2: #8fb7ff;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 10% -20%, #223b7e 0%, transparent 45%),
-        radial-gradient(circle at 110% 10%, #1f7e72 0%, transparent 35%),
-        var(--bg);
-      min-height: 100vh;
-    }
-
-    .wrap {
-      width: min(1080px, calc(100% - 2rem));
-      margin: 0 auto;
-      padding: 2.5rem 0 3rem;
-    }
-
-    .hero {
-      background: linear-gradient(145deg, #111a35, #172550);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 16px 50px rgb(0 0 0 / 30%);
-      margin-bottom: 1.5rem;
-    }
-
-    .tag {
-      display: inline-block;
-      color: #032a22;
-      background: var(--accent);
-      font-weight: 700;
-      padding: 0.3rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 0.9rem 0 0.6rem;
-      line-height: 1.05;
-      font-size: clamp(2rem, 4vw, 3.2rem);
-    }
-
-    .lead {
-      margin: 0;
-      color: var(--muted);
-      font-size: clamp(1rem, 1.8vw, 1.2rem);
-      max-width: 70ch;
-    }
-
-    h2 {
-      margin: 1.4rem 0 0.8rem;
-      font-size: 1.2rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 0.9rem;
-    }
-
-    .card {
-      text-decoration: none;
-      color: inherit;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: linear-gradient(145deg, #111933, #1a2650);
-      padding: 1rem;
-      transition: transform 140ms ease, border-color 140ms ease;
-    }
-
-    .card:hover {
-      transform: translateY(-3px);
-      border-color: var(--accent-2);
-    }
-
-    .card h3 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .meta {
-      margin: 0.45rem 0 0;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    footer {
-      margin-top: 1.8rem;
-      color: var(--muted);
-      font-size: 0.9rem;
-      text-align: center;
-    }
-  </style>
+  <title>Scout OG | Landing</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="wrap">
-    <section class="hero">
-      <span class="tag">Landing Page</span>
-      <h1>Scout OG Project Studio</h1>
-      <p class="lead">
-        This is a placeholder launchpad for six subprojects. Each page includes a basic outline you can replace with real copy, timelines, and assets.
-      </p>
-    </section>
-
-    <section>
-      <h2>Subprojects</h2>
-      <div class="grid">
-        <a class="card" href="/projects/project-01.html">
-          <h3>Project 01: Placeholder Name</h3>
-          <p class="meta">Category: Product Prototype</p>
-        </a>
-        <a class="card" href="/projects/project-02.html">
-          <h3>Project 02: Placeholder Name</h3>
-          <p class="meta">Category: Content Platform</p>
-        </a>
-        <a class="card" href="/projects/project-03.html">
-          <h3>Project 03: Placeholder Name</h3>
-          <p class="meta">Category: Internal Tooling</p>
-        </a>
-        <a class="card" href="/projects/project-04.html">
-          <h3>Project 04: Placeholder Name</h3>
-          <p class="meta">Category: Automation Workflow</p>
-        </a>
-        <a class="card" href="/projects/project-05.html">
-          <h3>Project 05: Placeholder Name</h3>
-          <p class="meta">Category: Community Program</p>
-        </a>
-        <a class="card" href="/projects/project-06.html">
-          <h3>Project 06: Placeholder Name</h3>
-          <p class="meta">Category: Experimental Build</p>
-        </a>
-      </div>
-    </section>
-
-    <footer>
-      Placeholder version - scout-og.com
-    </footer>
+<header class="site-header">
+  <div class="nav-wrap">
+    <a class="brand" href="/">Scout OG</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a class="active" href="/">Landing</a>
+      <a class="" href="/projects/project-01.html">Project 01</a>
+      <a class="" href="/projects/project-02.html">Project 02</a>
+      <a class="" href="/projects/project-03.html">Project 03</a>
+      <a class="" href="/projects/project-04.html">Project 04</a>
+      <a class="" href="/projects/project-05.html">Project 05</a>
+      <a class="" href="/projects/project-06.html">Project 06</a>
+    </nav>
   </div>
+</header>
+  <main class="page">
+    <section class="hero">
+      <span class="kicker">Landing Page</span>
+      <h1>Future Projects, One Launchpad</h1>
+      <p class="lead">This is a minimalist landing page with six placeholder project tracks. Replace each section with real goals, scope, and execution details as you build.</p>
+    </section>
+
+    <h2 class="section-title">Project Outline</h2>
+    <section class="grid">
+      <a class="card" href="/projects/project-01.html"><h3>Project 01: Placeholder Name</h3><p>Product prototype and validation track.</p></a>
+      <a class="card" href="/projects/project-02.html"><h3>Project 02: Placeholder Name</h3><p>Content or publishing platform track.</p></a>
+      <a class="card" href="/projects/project-03.html"><h3>Project 03: Placeholder Name</h3><p>Internal tooling and operations track.</p></a>
+      <a class="card" href="/projects/project-04.html"><h3>Project 04: Placeholder Name</h3><p>Automation workflow and process track.</p></a>
+      <a class="card" href="/projects/project-05.html"><h3>Project 05: Placeholder Name</h3><p>Community and audience program track.</p></a>
+      <a class="card" href="/projects/project-06.html"><h3>Project 06: Placeholder Name</h3><p>Experimental build and R&D track.</p></a>
+    </section>
+
+    <p class="footer-note">Placeholder version for scout-og.com</p>
+  </main>
 </body>
 </html>

@@ -3,82 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project 01 | Scout OG</title>
-  <style>
-    :root {
-      --bg: #0c1020;
-      --surface: #121b37;
-      --text: #f4f7ff;
-      --muted: #a5b2d9;
-      --line: #2a3a71;
-      --accent: #73e7cf;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 100% -10%, #225670 0%, transparent 35%),
-        radial-gradient(circle at -10% 10%, #1c3771 0%, transparent 45%),
-        var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    .wrap {
-      width: min(900px, calc(100% - 2rem));
-      margin: 0 auto;
-      padding: 2rem 0 3rem;
-    }
-
-    .home-link {
-      display: inline-block;
-      color: var(--accent);
-      text-decoration: none;
-      margin-bottom: 1rem;
-    }
-
-    article {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(145deg, #121b37, #1a2953);
-      padding: 1.5rem;
-      box-shadow: 0 14px 40px rgb(0 0 0 / 30%);
-    }
-
-    h1 { margin-top: 0; font-size: clamp(1.7rem, 3vw, 2.5rem); }
-    h2 { margin: 1.4rem 0 0.5rem; font-size: 1.1rem; }
-    p, li { color: var(--muted); line-height: 1.55; }
-
-    ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
-
-    .meta {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 0.6rem;
-      margin-top: 1rem;
-    }
-
-    .meta div {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 0.7rem;
-      background: rgb(0 0 0 / 10%);
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    strong { color: var(--text); }
-  </style>
+  <title>Project 01: Placeholder Name | Scout OG</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="wrap">
-    <a class="home-link" href="/">&larr; Back to landing page</a>
-    <article>
+<header class="site-header">
+  <div class="nav-wrap">
+    <a class="brand" href="/">Scout OG</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a class="" href="/">Landing</a>
+      <a class="active" href="/projects/project-01.html">Project 01</a>
+      <a class="" href="/projects/project-02.html">Project 02</a>
+      <a class="" href="/projects/project-03.html">Project 03</a>
+      <a class="" href="/projects/project-04.html">Project 04</a>
+      <a class="" href="/projects/project-05.html">Project 05</a>
+      <a class="" href="/projects/project-06.html">Project 06</a>
+    </nav>
+  </div>
+</header>
+  <main class="page">
+    <article class="panel">
+      <span class="kicker">Subproject Outline</span>
       <h1>Project 01: Placeholder Name</h1>
-      <p>Short summary placeholder: describe the problem, target users, and expected impact in 2 to 3 sentences.</p>
+      <p class="lead">Short summary placeholder: describe the problem, target users, and expected impact.</p>
 
       <div class="meta">
         <div><strong>Status:</strong> Idea</div>
@@ -98,17 +45,17 @@
       </ul>
 
       <h2>Target Audience</h2>
-      <p>Audience placeholder (for example: creators, customers, internal team, public users).</p>
+      <p>Audience placeholder (for example: customers, creators, internal team, or partners).</p>
 
       <h2>Tech Stack</h2>
-      <p>Stack placeholder (for example: HTML, CSS, JavaScript, API, database).</p>
+      <p>Stack placeholder (for example: HTML, CSS, JavaScript, APIs, and backend service).</p>
 
       <h2>Next Milestone</h2>
       <p>Milestone placeholder with expected deliverable and target date.</p>
 
       <h2>Call To Action</h2>
-      <p>CTA placeholder: add a signup link, contact form, waitlist, or demo request.</p>
+      <p>CTA placeholder: add waitlist, contact form, or demo request link.</p>
     </article>
-  </div>
+  </main>
 </body>
 </html>
