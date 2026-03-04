@@ -639,6 +639,7 @@ ul {
 
 .word-side p strong {
   font-weight: 700;
+  margin-right: 0.4rem;
 }
 
 /* Daily Brief v9 layout */

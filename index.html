@@ -286,8 +286,8 @@
           ctx.font = "24px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Space Grotesk, sans-serif";
           ctx.fillStyle = "#9db0d6";
           ctx.fillText(weatherCodeToIcon(entry.code), x, height - 30);
-          ctx.font = "14px Space Grotesk, Segoe UI, sans-serif";
-          ctx.fillStyle = "#7f92ba";
+          ctx.font = "700 16px Space Grotesk, Segoe UI, sans-serif";
+          ctx.fillStyle = "#a9bee7";
           ctx.fillText(entry.label, x, height - 13);
         });
 
@@ -453,6 +453,14 @@
         }
       }
 
+      function setOnThisDay(year, text) {
+        onThisDayEl.innerHTML = "";
+        const yearStrong = document.createElement("strong");
+        yearStrong.textContent = year + ":";
+        onThisDayEl.appendChild(yearStrong);
+        onThisDayEl.appendChild(document.createTextNode(" " + text));
+      }
+
       async function loadOnThisDay() {
         const month = now.getMonth() + 1;
         const day = now.getDate();
@@ -463,7 +471,7 @@
             const data = await primary.json();
             const event = data.events && data.events[0];
             if (event && event.text) {
-              onThisDayEl.textContent = event.year + ": " + safeText(event.text, "Historical event unavailable.");
+              setOnThisDay(event.year, safeText(event.text, "Historical event unavailable."));
               return;
             }
           }
@@ -476,13 +484,13 @@
             const events = data.data && data.data.Events;
             if (events && events.length) {
               const pick = events[0];
-              onThisDayEl.textContent = pick.year + ": " + safeText(pick.text, "Historical event unavailable.");
+              setOnThisDay(pick.year, safeText(pick.text, "Historical event unavailable."));
               return;
             }
           }
         } catch (_) {}
 
-        onThisDayEl.textContent = "On this day: notable world events occurred across politics, science, and culture. Source feeds are temporarily unavailable.";
+        setOnThisDay("On this day", "notable world events occurred across politics, science, and culture. Source feeds are temporarily unavailable.");
       }
 
       function setWordDefinition(word, definition) {
