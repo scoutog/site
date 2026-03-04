@@ -1,31 +1,47 @@
-# scout-og.com
+# Scout Site (`scout-og.com`)
 
-Minimal static site + GitHub Pages deployment.
+Static website hosted on GitHub Pages.
 
-## Local files
-- `index.html` - Hello World page
-- `CNAME` - custom domain for GitHub Pages (`scout-og.com`)
-- `.github/workflows/deploy.yml` - deploys on push to `main`
+## Live Site
+- Primary domain: `https://scout-og.com`
 
-## Deploy
-1. Create an empty GitHub repo (for example: `site`).
-2. Add your remote and push:
-   - `git remote add origin https://github.com/<your-username>/site.git`
-   - `git add .`
-   - `git commit -m "Initial hello world site"`
-   - `git push -u origin main`
-3. In GitHub repo settings, open **Pages** and set **Source** to **GitHub Actions**.
-4. Wait for the **Deploy static site to GitHub Pages** workflow to finish.
+## Current Pages
+- `index.html` - Daily Brief landing page
+- `projects/snake.html` - Playable Snake game
+- `projects/project-02.html` to `projects/project-06.html` - Placeholder project pages
+- `styles.css` - Shared site styling
+- `CNAME` - Custom domain configuration (`scout-og.com`)
 
-## DNS records for `scout-og.com`
-Create these DNS records at your domain registrar:
+## Daily Brief Features
+- Date, moon phase, and ZIP-based local weather
+- 24-hour weather chart (temperature, conditions, precipitation)
+- Top stories feed
+- On This Day fact
+- SAT-style Word of the Day
+- XKCD daily comic
+- Market Snapshot (SPY, VOO, NKE) with 1D change and Yahoo Finance detail links
 
-- `A` record, host `@` -> `185.199.108.153`
-- `A` record, host `@` -> `185.199.109.153`
-- `A` record, host `@` -> `185.199.110.153`
-- `A` record, host `@` -> `185.199.111.153`
-- `CNAME` record, host `www` -> `scout-og.com`
+## Snake Features
+- Keyboard controls: Arrow keys / WASD
+- Game starts on first movement key
+- Restart support and best-score persistence (`localStorage`)
+- Predefined color swatch selectors for snake and food
 
-Then in GitHub Pages custom domain settings, set domain to `scout-og.com` and enable HTTPS.
+## Deployment
+GitHub Actions deploys on push to `master` via:
+- `.github/workflows/deploy.yml`
 
-DNS propagation can take a few minutes up to 24 hours.
+Steps:
+1. Push changes to `master`.
+2. GitHub Actions runs `Deploy static site to GitHub Pages`.
+3. GitHub Pages publishes the site.
+
+## DNS / Domain
+For apex + `www` setup:
+- `A` record `@` -> `185.199.108.153`
+- `A` record `@` -> `185.199.109.153`
+- `A` record `@` -> `185.199.110.153`
+- `A` record `@` -> `185.199.111.153`
+- `CNAME` record `www` -> `scout-og.com`
+
+If using Cloudflare with GitHub Pages, keep these records as `DNS only` (not proxied) to avoid resolution/certificate issues.
