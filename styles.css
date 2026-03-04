@@ -320,7 +320,7 @@ ul {
 
 .zip-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.45rem;
 }
 
@@ -628,3 +628,4 @@ ul {
     border-bottom: 1px solid var(--line);
   }
 }
+
