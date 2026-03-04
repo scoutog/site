@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Daily Brief | Scout OG</title>
-  <link rel="stylesheet" href="/styles.css?v=5">
+  <link rel="stylesheet" href="/styles.css?v=6">
 </head>
 <body>
   <header class="site-header">
@@ -47,22 +47,30 @@
       </form>
     </section>
 
-    <section class="brief-grid-v2" aria-label="Daily sections">
+    <section class="brief-grid-v3" aria-label="Daily sections">
+      <article class="panel brief-card news-card-wide">
+        <div class="brief-card-head">
+          <h2>Top Stories (Past 24 Hours)</h2>
+          <p class="brief-sub">Politics, Tech, Sports, World, U.S., and Business.</p>
+        </div>
+        <div id="news-grid" class="news-grid"></div>
+      </article>
+
       <article class="panel brief-card weather-card">
         <div class="brief-card-head">
           <h2>Weather (Next 24 Hours)</h2>
           <p id="weather-summary" class="brief-sub">Loading weather...</p>
         </div>
-        <canvas id="hourly-chart" width="900" height="260" aria-label="Hourly temperature chart"></canvas>
-        <div id="hourly-conditions" class="hourly-conditions"></div>
+        <canvas id="hourly-chart" width="980" height="340" aria-label="Hourly weather chart"></canvas>
+        <p class="brief-sub chart-note">Bars: temperature (F). Line: precipitation probability (%).</p>
       </article>
 
-      <article class="panel brief-card news-card">
-        <div class="brief-card-head">
-          <h2>Top Stories (Past 24 Hours)</h2>
-          <p class="brief-sub">Mixed categories: Politics, Tech, Sports, World, U.S., Business.</p>
-        </div>
-        <div id="news-grid" class="news-grid"></div>
+      <article class="panel brief-card comic-card side-comic">
+        <h2>Daily Comic (XKCD)</h2>
+        <p class="brief-sub" id="comic-title">Loading comic...</p>
+        <a id="comic-link" href="#" target="_blank" rel="noopener noreferrer">
+          <img id="comic-image" alt="Daily comic" loading="lazy">
+        </a>
       </article>
 
       <article class="panel brief-card">
@@ -73,14 +81,6 @@
       <article class="panel brief-card">
         <h2>Word of the Day</h2>
         <p id="word-of-day">Loading word...</p>
-      </article>
-
-      <article class="panel brief-card comic-card">
-        <h2>Daily Comic (XKCD)</h2>
-        <p class="brief-sub" id="comic-title">Loading comic...</p>
-        <a id="comic-link" href="#" target="_blank" rel="noopener noreferrer">
-          <img id="comic-image" alt="Daily comic" loading="lazy">
-        </a>
       </article>
     </section>
   </main>
@@ -94,7 +94,6 @@
       const moonLabelEl = document.getElementById("moon-label");
       const weatherSummaryEl = document.getElementById("weather-summary");
       const hourlyChart = document.getElementById("hourly-chart");
-      const hourlyConditionsEl = document.getElementById("hourly-conditions");
       const zipForm = document.getElementById("zip-form");
       const zipInput = document.getElementById("zip-input");
       const useLocationBtn = document.getElementById("use-location");
@@ -118,29 +117,28 @@
         return value && String(value).trim() ? String(value).trim() : fallback;
       }
 
+      function stripHtml(input) {
+        return safeText(String(input || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "), "");
+      }
+
       function weatherCodeToText(code) {
         const map = {
-          0: "Clear",
-          1: "Mostly clear",
-          2: "Partly cloudy",
-          3: "Cloudy",
-          45: "Fog",
-          48: "Rime fog",
-          51: "Light drizzle",
-          53: "Drizzle",
-          55: "Heavy drizzle",
-          61: "Light rain",
-          63: "Rain",
-          65: "Heavy rain",
-          71: "Light snow",
-          73: "Snow",
-          75: "Heavy snow",
-          80: "Rain showers",
-          81: "Rain showers",
-          82: "Heavy showers",
-          95: "Thunderstorm"
+          0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Cloudy", 45: "Fog", 48: "Rime fog",
+          51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle", 61: "Light rain", 63: "Rain", 65: "Heavy rain",
+          71: "Light snow", 73: "Snow", 75: "Heavy snow", 80: "Rain showers", 81: "Rain showers", 82: "Heavy showers", 95: "Thunderstorm"
         };
         return map[code] || "Variable";
+      }
+
+      function weatherCodeToIcon(code) {
+        if (code === 0) return "SUN";
+        if (code <= 3) return "CLD";
+        if (code === 45 || code === 48) return "FOG";
+        if (code >= 51 && code <= 67) return "RAN";
+        if (code >= 71 && code <= 77) return "SNW";
+        if (code >= 80 && code <= 82) return "SHR";
+        if (code >= 95) return "STM";
+        return "VAR";
       }
 
       function moonData(date) {
@@ -181,9 +179,7 @@
         const svg =
           '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">' +
           '<rect width="80" height="80" rx="14" fill="#0c1629"/>' +
-          base +
-          lit +
-          '</svg>';
+          base + lit + '</svg>';
         return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
 
@@ -193,22 +189,7 @@
         moonLabelEl.textContent = moon.label;
       }
 
-      async function weatherByCoords(lat, lon, locationLabel) {
-        const url = "https://api.open-meteo.com/v1/forecast?latitude=" +
-          encodeURIComponent(lat) +
-          "&longitude=" +
-          encodeURIComponent(lon) +
-          "&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=auto";
-
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error("Weather lookup failed");
-        }
-        const data = await response.json();
-        renderWeather(data, locationLabel);
-      }
-
-      function renderHourlyChart(temps, labels) {
+      function renderHourlyChart(temps, precipProb, codes, labels) {
         const ctx = hourlyChart.getContext("2d");
         const width = hourlyChart.width;
         const height = hourlyChart.height;
@@ -217,13 +198,21 @@
         ctx.fillStyle = "#071223";
         ctx.fillRect(0, 0, width, height);
 
-        const pad = { top: 18, right: 20, bottom: 36, left: 40 };
+        const pad = { top: 24, right: 46, bottom: 64, left: 44 };
         const chartW = width - pad.left - pad.right;
         const chartH = height - pad.top - pad.bottom;
 
-        const min = Math.min.apply(null, temps);
-        const max = Math.max.apply(null, temps);
-        const range = Math.max(1, max - min);
+        const tempMin = Math.floor(Math.min.apply(null, temps) - 4);
+        const tempMax = Math.ceil(Math.max.apply(null, temps) + 4);
+        const tempRange = Math.max(1, tempMax - tempMin);
+
+        function yTemp(val) {
+          return pad.top + ((tempMax - val) / tempRange) * chartH;
+        }
+
+        function yPrecip(prob) {
+          return pad.top + ((100 - prob) / 100) * chartH;
+        }
 
         ctx.strokeStyle = "#203253";
         ctx.lineWidth = 1;
@@ -235,38 +224,70 @@
           ctx.stroke();
         }
 
-        ctx.strokeStyle = "#56d4ff";
+        const step = chartW / temps.length;
+        const barW = Math.max(8, step * 0.64);
+
+        ctx.fillStyle = "#2ca8da";
+        temps.forEach(function (temp, idx) {
+          const x = pad.left + idx * step + (step - barW) / 2;
+          const y = yTemp(temp);
+          const base = yTemp(tempMin);
+          ctx.fillRect(x, y, barW, Math.max(2, base - y));
+        });
+
+        ctx.strokeStyle = "#facc15";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        temps.forEach(function (temp, idx) {
-          const x = pad.left + (chartW * idx) / (temps.length - 1);
-          const y = pad.top + ((max - temp) / range) * chartH;
+        precipProb.forEach(function (prob, idx) {
+          const x = pad.left + idx * step + step / 2;
+          const y = yPrecip(prob);
           if (idx === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
         ctx.stroke();
 
-        ctx.fillStyle = "#7cf7d2";
-        temps.forEach(function (temp, idx) {
-          if (idx % 3 !== 0 && idx !== temps.length - 1) return;
-          const x = pad.left + (chartW * idx) / (temps.length - 1);
-          const y = pad.top + ((max - temp) / range) * chartH;
+        ctx.fillStyle = "#facc15";
+        precipProb.forEach(function (prob, idx) {
+          const x = pad.left + idx * step + step / 2;
+          const y = yPrecip(prob);
           ctx.beginPath();
-          ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+          ctx.arc(x, y, 2.3, 0, Math.PI * 2);
           ctx.fill();
-
-          ctx.fillStyle = "#93a2c7";
-          ctx.font = "12px Space Grotesk, Segoe UI, sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(labels[idx], x, height - 14);
-          ctx.fillStyle = "#7cf7d2";
         });
 
-        ctx.fillStyle = "#93a2c7";
-        ctx.font = "12px Space Grotesk, Segoe UI, sans-serif";
+        const maxTemp = Math.max.apply(null, temps);
+        const minTemp = Math.min.apply(null, temps);
+
+        ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
+        ctx.textAlign = "center";
+        temps.forEach(function (temp, idx) {
+          const show = idx % 4 === 0 || temp === maxTemp || temp === minTemp || idx === temps.length - 1;
+          if (!show) return;
+          const x = pad.left + idx * step + step / 2;
+          const y = yTemp(temp) - 6;
+          ctx.fillStyle = "#aee7ff";
+          ctx.fillText(Math.round(temp) + "°", x, y);
+        });
+
+        codes.forEach(function (code, idx) {
+          const x = pad.left + idx * step + step / 2;
+          ctx.fillStyle = "#9db0d6";
+          ctx.fillText(weatherCodeToIcon(code), x, height - 30);
+          if (idx % 3 === 0 || idx === temps.length - 1) {
+            ctx.fillStyle = "#7f92ba";
+            ctx.fillText(labels[idx], x, height - 14);
+          }
+        });
+
         ctx.textAlign = "left";
-        ctx.fillText(Math.round(max) + "F", 4, pad.top + 6);
-        ctx.fillText(Math.round(min) + "F", 4, pad.top + chartH);
+        ctx.fillStyle = "#9ac8e4";
+        ctx.fillText(tempMax + "F", 4, pad.top + 8);
+        ctx.fillText(tempMin + "F", 4, pad.top + chartH);
+
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#facc15";
+        ctx.fillText("100%", width - 4, pad.top + 8);
+        ctx.fillText("0%", width - 4, pad.top + chartH);
       }
 
       function renderWeather(data, locationLabel) {
@@ -275,6 +296,7 @@
         const times = hourly.time || [];
         const temps = hourly.temperature_2m || [];
         const codes = hourly.weather_code || [];
+        const precipProb = hourly.precipitation_probability || [];
 
         if (!temps.length || !times.length) {
           weatherSummaryEl.textContent = "Weather unavailable right now.";
@@ -289,44 +311,44 @@
         const nextTemps = temps.slice(offset, offset + 24);
         const nextTimes = times.slice(offset, offset + 24);
         const nextCodes = codes.slice(offset, offset + 24);
+        const nextPrecip = precipProb.slice(offset, offset + 24);
 
         const labels = nextTimes.map(function (iso) {
           const d = new Date(iso);
           return d.getHours() + ":00";
         });
 
+        const precipPeak = Math.max.apply(null, nextPrecip);
         weatherSummaryEl.textContent =
-          "Now " + Math.round(current.temperature_2m) + "F (feels " + Math.round(current.apparent_temperature) + "F), " + weatherCodeToText(current.weather_code) + ".";
+          "Now " + Math.round(current.temperature_2m) + "F (feels " + Math.round(current.apparent_temperature) + "F), " +
+          weatherCodeToText(current.weather_code) + ". Precip chance peaks at " + Math.round(precipPeak) + "% in next 24h.";
 
         locationEl.textContent = locationLabel;
+        renderHourlyChart(nextTemps, nextPrecip, nextCodes, labels);
+      }
 
-        renderHourlyChart(nextTemps, labels);
+      async function weatherByCoords(lat, lon, locationLabel) {
+        const url =
+          "https://api.open-meteo.com/v1/forecast?latitude=" + encodeURIComponent(lat) +
+          "&longitude=" + encodeURIComponent(lon) +
+          "&current=temperature_2m,apparent_temperature,weather_code" +
+          "&hourly=temperature_2m,weather_code,precipitation_probability" +
+          "&temperature_unit=fahrenheit&timezone=auto";
 
-        hourlyConditionsEl.innerHTML = "";
-        for (let i = 0; i < Math.min(8, nextTimes.length); i += 1) {
-          const item = document.createElement("div");
-          item.className = "hour-chip";
-          const time = new Date(nextTimes[i]);
-          item.innerHTML =
-            "<strong>" + time.toLocaleTimeString([], { hour: "numeric" }) + "</strong>" +
-            "<span>" + Math.round(nextTemps[i]) + "F</span>" +
-            "<span>" + weatherCodeToText(nextCodes[i]) + "</span>";
-          hourlyConditionsEl.appendChild(item);
-        }
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Weather lookup failed");
+        const data = await response.json();
+        renderWeather(data, locationLabel);
       }
 
       async function reverseGeocode(lat, lon) {
         try {
           const url = "https://geocoding-api.open-meteo.com/v1/reverse?latitude=" + encodeURIComponent(lat) + "&longitude=" + encodeURIComponent(lon) + "&language=en&count=1";
           const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error("Reverse geocode failed");
-          }
+          if (!response.ok) throw new Error("Reverse geocode failed");
           const data = await response.json();
           const top = data.results && data.results[0];
-          if (!top) {
-            return "Current Location";
-          }
+          if (!top) return "Current Location";
           return safeText(top.name, "Current Location") + ", " + safeText(top.admin1, "");
         } catch (_) {
           return "Current Location";
@@ -363,14 +385,10 @@
 
         try {
           const zipResponse = await fetch("https://api.zippopotam.us/us/" + encodeURIComponent(trimmed));
-          if (!zipResponse.ok) {
-            throw new Error("ZIP lookup failed");
-          }
+          if (!zipResponse.ok) throw new Error("ZIP lookup failed");
           const zipData = await zipResponse.json();
           const place = zipData.places && zipData.places[0];
-          if (!place) {
-            throw new Error("ZIP not found");
-          }
+          if (!place) throw new Error("ZIP not found");
 
           const lat = Number(place.latitude);
           const lon = Number(place.longitude);
@@ -382,67 +400,56 @@
       }
 
       async function loadNews() {
+        const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const fromDate = dayAgo.toISOString().slice(0, 10);
+        const toDate = now.toISOString().slice(0, 10);
+
         const categories = [
-          { label: "World", path: "worldnews" },
-          { label: "Politics", path: "politics" },
-          { label: "Tech", path: "technology" },
-          { label: "Sports", path: "sports" },
-          { label: "U.S.", path: "news" },
-          { label: "Business", path: "business" }
+          { label: "World", section: "world" },
+          { label: "Politics", section: "politics" },
+          { label: "Tech", section: "technology" },
+          { label: "Sports", section: "sport" },
+          { label: "U.S.", section: "us-news" },
+          { label: "Business", section: "business" }
         ];
 
-        const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
-
         try {
-          const groups = await Promise.all(categories.map(async function (cat) {
-            const url = "https://www.reddit.com/r/" + cat.path + "/top.json?t=day&limit=8";
+          const stories = await Promise.all(categories.map(async function (cat) {
+            const url =
+              "https://content.guardianapis.com/search?api-key=test" +
+              "&section=" + encodeURIComponent(cat.section) +
+              "&from-date=" + encodeURIComponent(fromDate) +
+              "&to-date=" + encodeURIComponent(toDate) +
+              "&order-by=newest&page-size=1&show-fields=thumbnail,trailText";
+
             const response = await fetch(url);
             if (!response.ok) return null;
             const data = await response.json();
-            const posts = ((data.data && data.data.children) || []).map(function (node) {
-              return node.data;
-            }).filter(function (post) {
-              const created = (post.created_utc || 0) * 1000;
-              return post.title && post.url && created >= dayAgo;
-            });
-            return { cat: cat.label, posts: posts };
+            const result = data.response && data.response.results && data.response.results[0];
+            if (!result) return null;
+            return {
+              category: cat.label,
+              title: result.webTitle,
+              url: result.webUrl,
+              image: result.fields && result.fields.thumbnail,
+              summary: stripHtml(result.fields && result.fields.trailText)
+            };
           }));
 
-          const selected = groups
-            .filter(Boolean)
-            .map(function (group) {
-              const post = group.posts[0];
-              if (!post) return null;
-              return { category: group.cat, post: post };
-            })
-            .filter(Boolean)
-            .slice(0, 6);
-
-          if (!selected.length) {
-            throw new Error("No stories");
-          }
+          const valid = stories.filter(Boolean);
+          if (!valid.length) throw new Error("No stories");
 
           newsGridEl.innerHTML = "";
-          selected.forEach(function (item) {
-            const post = item.post;
+          valid.forEach(function (item) {
             const card = document.createElement("article");
             card.className = "news-item";
-
-            const imageUrl =
-              (post.preview && post.preview.images && post.preview.images[0] && post.preview.images[0].source && post.preview.images[0].source.url) ||
-              (post.thumbnail && post.thumbnail.startsWith("http") ? post.thumbnail : "");
-
-            const cleanImage = imageUrl ? imageUrl.replace(/&amp;/g, "&") : "";
-            const articleUrl = post.url_overridden_by_dest || post.url;
-            const summary =
-              "From " + item.category + ": " +
-              "high-engagement story with " + (post.score || 0) + " points and " + (post.num_comments || 0) + " comments.";
+            const summary = safeText(item.summary, "Tap through for full coverage.");
 
             card.innerHTML =
-              (cleanImage ? "<img src=\"" + cleanImage + "\" alt=\"News image\" loading=\"lazy\">" : "") +
+              (item.image ? "<img src=\"" + item.image + "\" alt=\"News image\" loading=\"lazy\">" : "") +
               "<div class=\"news-body\">" +
                 "<span class=\"news-tag\">" + item.category + "</span>" +
-                "<a href=\"" + articleUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + safeText(post.title, "Untitled story") + "</a>" +
+                "<a href=\"" + item.url + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + safeText(item.title, "Untitled") + "</a>" +
                 "<p>" + summary + "</p>" +
               "</div>";
             newsGridEl.appendChild(card);
