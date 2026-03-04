@@ -210,3 +210,58 @@ ul {
   color: var(--muted);
   font-size: 0.9rem;
 }
+.brief-hero {
+  margin-bottom: 1rem;
+}
+
+.brief-updated {
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.brief-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.brief-card h2 {
+  margin-top: 0;
+}
+
+.brief-sub {
+  margin-top: 0;
+  font-size: 0.9rem;
+}
+
+.brief-news .brief-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.brief-list li + li {
+  margin-top: 0.8rem;
+}
+
+.brief-list a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.brief-list a:hover {
+  text-decoration: underline;
+}
+
+.brief-list p {
+  margin: 0.25rem 0 0;
+  font-size: 0.92rem;
+}
+
+.brief-comic-card img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #0c1629;
+}

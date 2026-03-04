@@ -1,0 +1,278 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Brief | Scout OG</title>
+  <link rel="stylesheet" href="/styles.css?v=4">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="/">Scout OG</a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/">Landing</a>
+        <a class="active" href="/daily-brief.html">Daily Brief</a>
+        <a href="/projects/project-01.html">Project 01</a>
+        <a href="/projects/project-02.html">Project 02</a>
+        <a href="/projects/project-03.html">Project 03</a>
+        <a href="/projects/project-04.html">Project 04</a>
+        <a href="/projects/project-05.html">Project 05</a>
+        <a href="/projects/project-06.html">Project 06</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="panel brief-hero">
+      <span class="kicker">Daily Brief</span>
+      <h1 id="today-date">Today</h1>
+      <p class="lead">Weather, fresh headlines, and one fun set of daily extras in one place.</p>
+      <p class="brief-updated" id="last-updated">Loading latest updates...</p>
+    </section>
+
+    <section class="brief-grid" aria-label="Daily sections">
+      <article class="panel brief-card">
+        <h2>Weather</h2>
+        <p id="weather-summary">Loading weather...</p>
+        <p class="brief-sub" id="weather-detail"></p>
+      </article>
+
+      <article class="panel brief-card brief-news">
+        <h2>Top Stories (Past 24h)</h2>
+        <p class="brief-sub">Source: Hacker News top stories from the last 24 hours.</p>
+        <ol id="news-list" class="brief-list"></ol>
+      </article>
+
+      <article class="panel brief-card">
+        <h2>On This Day</h2>
+        <p id="on-this-day">Loading fact...</p>
+      </article>
+
+      <article class="panel brief-card">
+        <h2>Word of the Day</h2>
+        <p id="word-of-day">Loading word...</p>
+      </article>
+
+      <article class="panel brief-card brief-comic-card">
+        <h2>Daily Comic</h2>
+        <p class="brief-sub" id="comic-title">Loading comic...</p>
+        <a id="comic-link" href="#" target="_blank" rel="noopener noreferrer">
+          <img id="comic-image" alt="Daily comic" loading="lazy">
+        </a>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const dateEl = document.getElementById("today-date");
+      const updatedEl = document.getElementById("last-updated");
+      const weatherSummaryEl = document.getElementById("weather-summary");
+      const weatherDetailEl = document.getElementById("weather-detail");
+      const newsListEl = document.getElementById("news-list");
+      const onThisDayEl = document.getElementById("on-this-day");
+      const wordEl = document.getElementById("word-of-day");
+      const comicTitleEl = document.getElementById("comic-title");
+      const comicLinkEl = document.getElementById("comic-link");
+      const comicImageEl = document.getElementById("comic-image");
+
+      const now = new Date();
+      dateEl.textContent = now.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      });
+      updatedEl.textContent = "Updated " + now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+      function safeText(value, fallback) {
+        return value && String(value).trim() ? String(value).trim() : fallback;
+      }
+
+      function summaryFromTitle(title, score, comments) {
+        const pieces = [
+          "Key headline: " + safeText(title, "Untitled story") + ".",
+          typeof score === "number" ? "Community score is " + score + "." : "Community engagement is active.",
+          typeof comments === "number" ? comments + " comment" + (comments === 1 ? "" : "s") + " so far." : "Discussion is ongoing."
+        ];
+        return pieces.join(" ");
+      }
+
+      async function loadWeather() {
+        try {
+          if (!navigator.geolocation) {
+            throw new Error("Location unavailable");
+          }
+
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 9000 });
+          });
+
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          const forecastUrl = "https://api.open-meteo.com/v1/forecast?latitude=" +
+            encodeURIComponent(lat) +
+            "&longitude=" +
+            encodeURIComponent(lon) +
+            "&current=temperature_2m,apparent_temperature,is_day,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto";
+
+          const response = await fetch(forecastUrl);
+          if (!response.ok) {
+            throw new Error("Weather request failed");
+          }
+
+          const data = await response.json();
+          const current = data.current || {};
+          const daily = data.daily || {};
+          const temp = current.temperature_2m;
+          const feels = current.apparent_temperature;
+          const hi = daily.temperature_2m_max && daily.temperature_2m_max[0];
+          const low = daily.temperature_2m_min && daily.temperature_2m_min[0];
+
+          weatherSummaryEl.textContent =
+            "Now " + Math.round(temp) + "F, feels like " + Math.round(feels) + "F.";
+          weatherDetailEl.textContent =
+            "Today's range: " + Math.round(low) + "F to " + Math.round(hi) + "F.";
+        } catch (error) {
+          weatherSummaryEl.textContent = "Weather unavailable right now.";
+          weatherDetailEl.textContent = "Allow location access to show local weather.";
+        }
+      }
+
+      async function loadNews() {
+        newsListEl.innerHTML = "";
+        try {
+          const topResponse = await fetch("https://hacker-news.firebaseio.com/v0/topstories.json");
+          if (!topResponse.ok) {
+            throw new Error("News request failed");
+          }
+
+          const ids = await topResponse.json();
+          const storyIds = ids.slice(0, 80);
+          const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+          const stories = await Promise.all(
+            storyIds.map(async function (id) {
+              try {
+                const res = await fetch("https://hacker-news.firebaseio.com/v0/item/" + id + ".json");
+                if (!res.ok) {
+                  return null;
+                }
+                return await res.json();
+              } catch (_) {
+                return null;
+              }
+            })
+          );
+
+          const recent = stories
+            .filter(function (item) {
+              return item &&
+                item.type === "story" &&
+                item.time &&
+                (item.time * 1000) >= dayAgo &&
+                item.title;
+            })
+            .sort(function (a, b) {
+              return (b.score || 0) - (a.score || 0);
+            })
+            .slice(0, 5);
+
+          if (!recent.length) {
+            throw new Error("No recent stories");
+          }
+
+          recent.forEach(function (story) {
+            const item = document.createElement("li");
+            const link = document.createElement("a");
+            const url = story.url || ("https://news.ycombinator.com/item?id=" + story.id);
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = safeText(story.title, "Untitled story");
+
+            const blurb = document.createElement("p");
+            blurb.textContent = summaryFromTitle(story.title, story.score, story.descendants);
+
+            item.appendChild(link);
+            item.appendChild(blurb);
+            newsListEl.appendChild(item);
+          });
+        } catch (error) {
+          const fallback = document.createElement("li");
+          fallback.textContent = "News unavailable right now. Please refresh in a minute.";
+          newsListEl.appendChild(fallback);
+        }
+      }
+
+      async function loadOnThisDay() {
+        try {
+          const month = now.getMonth() + 1;
+          const day = now.getDate();
+          const endpoint = "https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/events/" + month + "/" + day;
+          const response = await fetch(endpoint);
+          if (!response.ok) {
+            throw new Error("On this day request failed");
+          }
+          const data = await response.json();
+          const event = data.events && data.events[0];
+          if (!event) {
+            throw new Error("No event");
+          }
+          onThisDayEl.textContent = event.year + ": " + safeText(event.text, "Historical event unavailable.");
+        } catch (error) {
+          onThisDayEl.textContent = "On-this-day fact unavailable right now.";
+        }
+      }
+
+      async function loadWordOfDay() {
+        const seedWords = [
+          "luminous", "resilient", "curiosity", "velocity", "clarity", "horizon", "momentum", "signal", "craft", "atlas"
+        ];
+        const dayIndex = Math.floor(now.getTime() / 86400000) % seedWords.length;
+        const chosen = seedWords[dayIndex];
+
+        try {
+          const response = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(chosen));
+          if (!response.ok) {
+            throw new Error("Dictionary request failed");
+          }
+          const data = await response.json();
+          const meaning = data[0] && data[0].meanings && data[0].meanings[0];
+          const definition = meaning && meaning.definitions && meaning.definitions[0] && meaning.definitions[0].definition;
+          wordEl.textContent = chosen + ": " + safeText(definition, "Definition unavailable.");
+        } catch (error) {
+          wordEl.textContent = chosen + ": definition unavailable right now.";
+        }
+      }
+
+      async function loadComic() {
+        try {
+          const response = await fetch("https://xkcd.vercel.app/?comic=latest");
+          if (!response.ok) {
+            throw new Error("Comic request failed");
+          }
+          const comic = await response.json();
+          comicTitleEl.textContent = safeText(comic.title, "Daily comic");
+          comicLinkEl.href = "https://xkcd.com/" + safeText(comic.num, "");
+          comicImageEl.src = safeText(comic.img, "");
+          comicImageEl.alt = safeText(comic.alt, "Daily comic");
+        } catch (error) {
+          comicTitleEl.textContent = "Comic unavailable right now.";
+          comicLinkEl.removeAttribute("href");
+          comicImageEl.removeAttribute("src");
+          comicImageEl.alt = "Comic unavailable";
+        }
+      }
+
+      loadWeather();
+      loadNews();
+      loadOnThisDay();
+      loadWordOfDay();
+      loadComic();
+    })();
+  </script>
+</body>
+</html>
