@@ -517,11 +517,6 @@ ul {
   grid-column: span 4;
 }
 
-.brief-grid-v3 > .brief-card:nth-last-child(2),
-.brief-grid-v3 > .brief-card:nth-last-child(1) {
-  grid-column: span 6;
-}
-
 .chart-note {
   margin-top: 0.45rem;
 }
@@ -540,9 +535,7 @@ ul {
   }
 
   .weather-card,
-  .side-comic,
-  .brief-grid-v3 > .brief-card:nth-last-child(2),
-  .brief-grid-v3 > .brief-card:nth-last-child(1) {
+  .side-comic {
     grid-column: span 12;
   }
 }

@@ -47,8 +47,7 @@
       flex-wrap: wrap;
     }
 
-    button,
-    select {
+    button {
       border: 1px solid var(--line);
       background: linear-gradient(165deg, #12213b, #152846);
       color: var(--text);
@@ -62,22 +61,53 @@
       cursor: pointer;
     }
 
-    button:hover,
-    select:hover {
+    button:hover {
       border-color: #35527d;
     }
 
-    .color-picker {
-      width: 72px;
-      text-align: center;
-      padding: 0.35rem 0.5rem;
+    .color-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid var(--line);
+      background: linear-gradient(165deg, #0d1a30, #122543);
+      border-radius: 999px;
+      padding: 0.3rem 0.45rem 0.3rem 0.7rem;
+      min-width: 124px;
       cursor: pointer;
-      font-weight: 700;
     }
 
-    .color-picker option {
-      font-size: 0.95rem;
-      text-align: center;
+    .color-box span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      letter-spacing: 0.02em;
+    }
+
+    .color-picker {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 42px;
+      height: 26px;
+      border: 1px solid #27436f;
+      border-radius: 999px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .color-picker::-webkit-color-swatch-wrapper {
+      padding: 0;
+      border-radius: 999px;
+    }
+
+    .color-picker::-webkit-color-swatch {
+      border: 0;
+      border-radius: 999px;
+    }
+
+    .color-picker::-moz-color-swatch {
+      border: 0;
+      border-radius: 999px;
     }
 
     .snake-board-wrap {
@@ -140,7 +170,6 @@
 
   <main class="page">
     <article class="panel snake-layout">
-      <span class="kicker">Classic Game</span>
       <h1 class="snake-headline">Snake</h1>
       <p class="lead">Use arrow keys or WASD to move. Any movement key starts the game. Avoid walls and your own tail.</p>
 
@@ -157,25 +186,14 @@
       </div>
 
       <div class="snake-pickers" aria-label="Color pickers">
-        <span class="chip">Snake</span>
-        <select id="snake-color" class="color-picker" title="Snake color" aria-label="Snake color">
-          <option value="#7cf7d2" style="background-color:#7cf7d2;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#56d4ff" style="background-color:#56d4ff;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#f97316" style="background-color:#f97316;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#ef4444" style="background-color:#ef4444;color:#ffffff;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#a855f7" style="background-color:#a855f7;color:#ffffff;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#facc15" style="background-color:#facc15;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-        </select>
-
-        <span class="chip">Food</span>
-        <select id="food-color" class="color-picker" title="Food color" aria-label="Food color">
-          <option value="#56d4ff" style="background-color:#56d4ff;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#f43f5e" style="background-color:#f43f5e;color:#ffffff;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#facc15" style="background-color:#facc15;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#22c55e" style="background-color:#22c55e;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#a855f7" style="background-color:#a855f7;color:#ffffff;">&nbsp;&nbsp;&nbsp;</option>
-          <option value="#fb923c" style="background-color:#fb923c;color:#0b1020;">&nbsp;&nbsp;&nbsp;</option>
-        </select>
+        <label class="color-box" for="snake-color">
+          <span>Snake</span>
+          <input id="snake-color" class="color-picker" type="color" value="#7cf7d2" title="Snake color" aria-label="Snake color">
+        </label>
+        <label class="color-box" for="food-color">
+          <span>Food</span>
+          <input id="food-color" class="color-picker" type="color" value="#56d4ff" title="Food color" aria-label="Food color">
+        </label>
       </div>
 
       <div class="snake-board-wrap">
@@ -204,8 +222,8 @@
       const stateEl = document.getElementById("state");
       const startBtn = document.getElementById("start-btn");
       const restartBtn = document.getElementById("restart-btn");
-      const snakeColorSelect = document.getElementById("snake-color");
-      const foodColorSelect = document.getElementById("food-color");
+      const snakeColorInput = document.getElementById("snake-color");
+      const foodColorInput = document.getElementById("food-color");
 
       const tileSize = 24;
       const tiles = board.width / tileSize;
@@ -221,8 +239,8 @@
       let running = false;
       let gameOver = false;
 
-      let snakeColor = snakeColorSelect.value;
-      let foodColor = foodColorSelect.value;
+      let snakeColor = snakeColorInput.value;
+      let foodColor = foodColorInput.value;
 
       function randomCell() {
         return {
@@ -268,16 +286,20 @@
         return "#" + [r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("");
       }
 
-      function applyPickerVisual(selectEl) {
-        const hex = selectEl.value;
+      function applyPickerVisual(inputEl) {
+        const hex = inputEl.value;
         const raw = hex.replace("#", "");
         const r = parseInt(raw.slice(0, 2), 16);
         const g = parseInt(raw.slice(2, 4), 16);
         const b = parseInt(raw.slice(4, 6), 16);
         const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-        selectEl.style.background = hex;
-        selectEl.style.color = luminance > 0.55 ? "#0b1020" : "#ffffff";
-        selectEl.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
+        inputEl.style.background = hex;
+        inputEl.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
+        const wrapper = inputEl.closest(".color-box");
+        if (wrapper) {
+          wrapper.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
+          wrapper.style.background = "linear-gradient(165deg, " + shade(hex, -140) + ", " + shade(hex, -108) + ")";
+        }
       }
       function resetGame() {
         snake = [
@@ -437,15 +459,15 @@
         });
       });
 
-      snakeColorSelect.addEventListener("change", function () {
-        snakeColor = snakeColorSelect.value;
-        applyPickerVisual(snakeColorSelect);
+      snakeColorInput.addEventListener("change", function () {
+        snakeColor = snakeColorInput.value;
+        applyPickerVisual(snakeColorInput);
         draw();
       });
 
-      foodColorSelect.addEventListener("change", function () {
-        foodColor = foodColorSelect.value;
-        applyPickerVisual(foodColorSelect);
+      foodColorInput.addEventListener("change", function () {
+        foodColor = foodColorInput.value;
+        applyPickerVisual(foodColorInput);
         draw();
       });
 
@@ -453,13 +475,16 @@
       restartBtn.addEventListener("click", restartGame);
 
       loadBest();
-      applyPickerVisual(snakeColorSelect);
-      applyPickerVisual(foodColorSelect);
+      applyPickerVisual(snakeColorInput);
+      applyPickerVisual(foodColorInput);
       resetGame();
     })();
   </script>
 </body>
 </html>
+
+
+
 
 
 
