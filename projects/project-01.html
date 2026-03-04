@@ -1,1 +1,353 @@
-<!doctype html><html lang="en"><head>  <meta charset="utf-8">  <meta name="viewport" content="width=device-width, initial-scale=1">  <title>Project 01: Placeholder Name | Scout OG</title>  <link rel="stylesheet" href="/styles.css?v=3"></head><body><header class="site-header">  <div class="nav-wrap">    <a class="brand" href="/">Scout OG</a>    <nav class="nav-links" aria-label="Primary">      <a class="" href="/">Landing</a>      <a class="active" href="/projects/project-01.html">Project 01</a>      <a class="" href="/projects/project-02.html">Project 02</a>      <a class="" href="/projects/project-03.html">Project 03</a>      <a class="" href="/projects/project-04.html">Project 04</a>      <a class="" href="/projects/project-05.html">Project 05</a>      <a class="" href="/projects/project-06.html">Project 06</a>    </nav>  </div></header>  <main class="page">    <article class="panel">      <span class="kicker">Subproject Outline</span>      <h1>Project 01: Placeholder Name</h1>      <p class="lead">Short summary placeholder: describe the problem, target users, and expected impact.</p>      <div class="meta">        <div><strong>Status:</strong> Idea</div>        <div><strong>Owner:</strong> Placeholder Owner</div>        <div><strong>Timeline:</strong> QX 2026</div>        <div><strong>Priority:</strong> High</div>      </div>      <h2>Overview</h2>      <p>Placeholder overview content. Explain what this project is and why it matters.</p>      <h2>Goals</h2>      <ul>        <li>Goal placeholder 1</li>        <li>Goal placeholder 2</li>        <li>Goal placeholder 3</li>      </ul>      <h2>Target Audience</h2>      <p>Audience placeholder (for example: customers, creators, internal team, or partners).</p>      <h2>Tech Stack</h2>      <p>Stack placeholder (for example: HTML, CSS, JavaScript, APIs, and backend service).</p>      <h2>Next Milestone</h2>      <p>Milestone placeholder with expected deliverable and target date.</p>      <h2>Call To Action</h2>      <p>CTA placeholder: add waitlist, contact form, or demo request link.</p>    </article>  </main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project 01: Snake | Scout OG</title>
+  <link rel="stylesheet" href="/styles.css?v=3">
+  <style>
+    .snake-layout {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .snake-headline {
+      margin-bottom: 0.4rem;
+    }
+
+    .snake-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+    }
+
+    .snake-metrics {
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: #0c1629;
+      border-radius: 999px;
+      padding: 0.32rem 0.66rem;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .snake-actions {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: linear-gradient(165deg, #12213b, #152846);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 0.42rem 0.78rem;
+      font: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: #35527d;
+    }
+
+    .snake-board-wrap {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #091223;
+      padding: 0.7rem;
+      display: grid;
+      place-items: center;
+    }
+
+    #snake-board {
+      display: block;
+      width: min(100%, 480px);
+      height: auto;
+      border: 1px solid #21395f;
+      border-radius: 10px;
+      background: #050a14;
+      image-rendering: pixelated;
+    }
+
+    .snake-help {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .touch-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 54px);
+      justify-content: center;
+      gap: 0.42rem;
+      margin-top: 0.5rem;
+    }
+
+    .touch-controls button {
+      border-radius: 12px;
+      padding: 0.6rem 0;
+    }
+
+    .touch-controls .empty {
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="/">Scout OG</a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/">Landing</a>
+        <a class="active" href="/projects/project-01.html">Project 01</a>
+        <a href="/projects/project-02.html">Project 02</a>
+        <a href="/projects/project-03.html">Project 03</a>
+        <a href="/projects/project-04.html">Project 04</a>
+        <a href="/projects/project-05.html">Project 05</a>
+        <a href="/projects/project-06.html">Project 06</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <article class="panel snake-layout">
+      <span class="kicker">Classic Game</span>
+      <h1 class="snake-headline">Project 01: Snake</h1>
+      <p class="lead">Use arrow keys or WASD to move. Eat food, grow longer, and avoid walls and your own tail.</p>
+
+      <div class="snake-topbar">
+        <div class="snake-metrics">
+          <span class="chip">Score: <strong id="score">0</strong></span>
+          <span class="chip">Best: <strong id="best">0</strong></span>
+          <span class="chip">State: <strong id="state">Ready</strong></span>
+        </div>
+        <div class="snake-actions">
+          <button id="start-btn" type="button">Start</button>
+          <button id="restart-btn" type="button">Restart</button>
+        </div>
+      </div>
+
+      <div class="snake-board-wrap">
+        <canvas id="snake-board" width="480" height="480" aria-label="Snake game board"></canvas>
+      </div>
+
+      <p class="snake-help">Controls: Arrow keys / WASD. On mobile, use the directional buttons below.</p>
+
+      <div class="touch-controls" aria-label="Touch controls">
+        <span class="empty"></span>
+        <button data-dir="up" type="button">Up</button>
+        <span class="empty"></span>
+        <button data-dir="left" type="button">Left</button>
+        <button data-dir="down" type="button">Down</button>
+        <button data-dir="right" type="button">Right</button>
+      </div>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      const board = document.getElementById("snake-board");
+      const ctx = board.getContext("2d");
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const stateEl = document.getElementById("state");
+      const startBtn = document.getElementById("start-btn");
+      const restartBtn = document.getElementById("restart-btn");
+
+      const tileSize = 24;
+      const tiles = board.width / tileSize;
+      const speed = 120;
+      const bestKey = "scout_og_snake_best";
+
+      let snake;
+      let dir;
+      let nextDir;
+      let food;
+      let score;
+      let loopId;
+      let running;
+
+      function randomCell() {
+        return {
+          x: Math.floor(Math.random() * tiles),
+          y: Math.floor(Math.random() * tiles)
+        };
+      }
+
+      function placeFood() {
+        let candidate = randomCell();
+        while (snake.some((part) => part.x === candidate.x && part.y === candidate.y)) {
+          candidate = randomCell();
+        }
+        food = candidate;
+      }
+
+      function setState(label) {
+        stateEl.textContent = label;
+      }
+
+      function loadBest() {
+        const value = Number(localStorage.getItem(bestKey) || "0");
+        bestEl.textContent = String(value);
+        return value;
+      }
+
+      function saveBest(value) {
+        const best = Number(localStorage.getItem(bestKey) || "0");
+        if (value > best) {
+          localStorage.setItem(bestKey, String(value));
+          bestEl.textContent = String(value);
+        }
+      }
+
+      function resetGame() {
+        snake = [
+          { x: 10, y: 10 },
+          { x: 9, y: 10 },
+          { x: 8, y: 10 }
+        ];
+        dir = { x: 1, y: 0 };
+        nextDir = { x: 1, y: 0 };
+        score = 0;
+        scoreEl.textContent = "0";
+        placeFood();
+        setState("Ready");
+        draw();
+      }
+
+      function drawCell(x, y, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x * tileSize + 1, y * tileSize + 1, tileSize - 2, tileSize - 2);
+      }
+
+      function drawGrid() {
+        ctx.fillStyle = "#050a14";
+        ctx.fillRect(0, 0, board.width, board.height);
+
+        ctx.strokeStyle = "#0f1b31";
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= tiles; i += 1) {
+          const pos = i * tileSize;
+          ctx.beginPath();
+          ctx.moveTo(pos, 0);
+          ctx.lineTo(pos, board.height);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(0, pos);
+          ctx.lineTo(board.width, pos);
+          ctx.stroke();
+        }
+      }
+
+      function draw() {
+        drawGrid();
+        drawCell(food.x, food.y, "#56d4ff");
+        snake.forEach((part, idx) => {
+          drawCell(part.x, part.y, idx === 0 ? "#7cf7d2" : "#2db487");
+        });
+      }
+
+      function collide(point) {
+        if (point.x < 0 || point.x >= tiles || point.y < 0 || point.y >= tiles) {
+          return true;
+        }
+        return snake.some((part) => part.x === point.x && part.y === point.y);
+      }
+
+      function tick() {
+        dir = nextDir;
+        const head = snake[0];
+        const nextHead = { x: head.x + dir.x, y: head.y + dir.y };
+
+        if (collide(nextHead)) {
+          running = false;
+          clearInterval(loopId);
+          setState("Game Over");
+          saveBest(score);
+          return;
+        }
+
+        snake.unshift(nextHead);
+
+        if (nextHead.x === food.x && nextHead.y === food.y) {
+          score += 1;
+          scoreEl.textContent = String(score);
+          placeFood();
+        } else {
+          snake.pop();
+        }
+
+        draw();
+      }
+
+      function setDirection(dx, dy) {
+        if (!running) {
+          return;
+        }
+        if (dx === -dir.x && dy === -dir.y) {
+          return;
+        }
+        nextDir = { x: dx, y: dy };
+      }
+
+      function startGame() {
+        if (running) {
+          return;
+        }
+        running = true;
+        setState("Running");
+        loopId = setInterval(tick, speed);
+      }
+
+      function restartGame() {
+        clearInterval(loopId);
+        running = false;
+        resetGame();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+        if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(key)) {
+          event.preventDefault();
+        }
+
+        if (!running && key === " ") {
+          startGame();
+          return;
+        }
+
+        if (key === "arrowup" || key === "w") setDirection(0, -1);
+        if (key === "arrowdown" || key === "s") setDirection(0, 1);
+        if (key === "arrowleft" || key === "a") setDirection(-1, 0);
+        if (key === "arrowright" || key === "d") setDirection(1, 0);
+      });
+
+      document.querySelectorAll("[data-dir]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const dirName = button.getAttribute("data-dir");
+          if (dirName === "up") setDirection(0, -1);
+          if (dirName === "down") setDirection(0, 1);
+          if (dirName === "left") setDirection(-1, 0);
+          if (dirName === "right") setDirection(1, 0);
+        });
+      });
+
+      startBtn.addEventListener("click", startGame);
+      restartBtn.addEventListener("click", restartGame);
+
+      loadBest();
+      resetGame();
+    })();
+  </script>
+</body>
+</html>
