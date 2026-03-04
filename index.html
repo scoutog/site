@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Daily Brief | Scout OG</title>
-  <link rel="stylesheet" href="/styles.css?v=9">
+  <link rel="stylesheet" href="/styles.css?v=10">
 </head>
 <body>
   <header class="site-header">
@@ -24,20 +24,16 @@
 
   <main class="page">
     <section class="panel brief-hero-v2">
-      <div class="brief-title-wrap">
-        <span class="kicker">Daily Brief</span>
-        <h1 id="today-date" class="brief-title">Today</h1>
+      <div class="brief-title-wrap">        <h1 id="today-date" class="brief-title">Today</h1>
         <div class="brief-moon-row">
           <img id="moon-image" alt="Moon phase" class="moon-image">
           <p id="moon-label" class="brief-sub"></p>
         </div>
-        <p id="brief-location" class="brief-location">Albany, NY</p>
-        <p id="last-updated" class="brief-updated">Loading latest updates...</p>
+                <p id="last-updated" class="brief-updated">Loading latest updates...</p>
       </div>
 
       <form id="zip-form" class="zip-form" autocomplete="on">
-        <label for="zip-input">Location (ZIP)</label>
-        <div class="zip-controls">
+        <div class="zip-head>`r`n          <label for="zip-input">Location (ZIP)</label>`r`n          <p id="brief-location" class="brief-location brief-location-right">Albany, NY</p>`r`n        </div>`r`n        <div class="zip-controls">
           <input id="zip-input" name="zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="12210" value="12210">
           <button type="submit">Update ZIP</button>
         </div>

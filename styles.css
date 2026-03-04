@@ -659,3 +659,29 @@ ul {
     grid-column: span 12;
   }
 }
+
+/* Daily Brief v10 header */
+.zip-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brief-location-right {
+  margin: 0;
+  font-size: 0.88rem;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .zip-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .brief-location-right {
+    text-align: left;
+  }
+}
