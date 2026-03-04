@@ -632,14 +632,16 @@ ul {
 .word-side p,
 .onthisday-bottom p {
   margin: 0;
-  display: flex;
-  align-items: center;
+  display: grid;
+  align-content: center;
+  gap: 0.38rem;
   line-height: 1.45;
 }
 
-.word-side p strong {
+.word-side p strong,
+.onthisday-bottom p strong {
+  display: block;
   font-weight: 700;
-  margin-right: 0.4rem;
 }
 
 /* Daily Brief v9 layout */

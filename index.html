@@ -457,8 +457,10 @@
         onThisDayEl.innerHTML = "";
         const yearStrong = document.createElement("strong");
         yearStrong.textContent = year + ":";
+        const detail = document.createElement("span");
+        detail.textContent = text;
         onThisDayEl.appendChild(yearStrong);
-        onThisDayEl.appendChild(document.createTextNode(" " + text));
+        onThisDayEl.appendChild(detail);
       }
 
       async function loadOnThisDay() {
@@ -497,8 +499,10 @@
         wordEl.innerHTML = "";
         const wordStrong = document.createElement("strong");
         wordStrong.textContent = word + ":";
+        const detail = document.createElement("span");
+        detail.textContent = definition;
         wordEl.appendChild(wordStrong);
-        wordEl.appendChild(document.createTextNode(" " + definition));
+        wordEl.appendChild(detail);
       }
 
       async function loadWordOfDay() {
