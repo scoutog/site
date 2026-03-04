@@ -629,3 +629,33 @@ ul {
   }
 }
 
+
+/* Daily Brief v9 layout */
+.weather-primary {
+  grid-column: span 8;
+}
+
+.word-side {
+  grid-column: span 4;
+}
+
+.onthisday-bottom {
+  grid-column: span 6;
+}
+
+.comic-bottom {
+  grid-column: span 6;
+}
+
+.news-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 1100px) {
+  .weather-primary,
+  .word-side,
+  .onthisday-bottom,
+  .comic-bottom {
+    grid-column: span 12;
+  }
+}

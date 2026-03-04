@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Daily Brief | Scout OG</title>
-  <link rel="stylesheet" href="/styles.css?v=8">
+  <link rel="stylesheet" href="/styles.css?v=9">
 </head>
 <body>
   <header class="site-header">
@@ -46,15 +46,7 @@
     </section>
 
     <section class="brief-grid-v3" aria-label="Daily sections">
-      <article class="panel brief-card news-card-wide">
-        <div class="brief-card-head">
-          <h2>Top Stories (Past 24 Hours)</h2>
-          <p class="brief-sub">Priority coverage: U.S., Politics, and World; plus major Business/Tech when relevant.</p>
-        </div>
-        <div id="news-grid" class="news-grid"></div>
-      </article>
-
-      <article class="panel brief-card weather-card">
+      <article class="panel brief-card weather-card weather-primary">
         <div class="brief-card-head">
           <h2>Weather (Next 24 Hours)</h2>
           <p id="weather-summary" class="brief-sub">Loading weather...</p>
@@ -65,22 +57,30 @@
         </div>
       </article>
 
-      <article class="panel brief-card comic-card side-comic">
+      <article class="panel brief-card word-side">
+        <h2>Word of the Day</h2>
+        <p id="word-of-day">Loading word...</p>
+      </article>
+
+      <article class="panel brief-card news-card-wide">
+        <div class="brief-card-head">
+          <h2>Top Stories (Past 24 Hours)</h2>
+          <p class="brief-sub">Priority coverage: U.S., Politics, and World; plus major Business/Tech when relevant.</p>
+        </div>
+        <div id="news-grid" class="news-grid"></div>
+      </article>
+
+      <article class="panel brief-card onthisday-bottom">
+        <h2>On This Day</h2>
+        <p id="on-this-day">Loading fact...</p>
+      </article>
+
+      <article class="panel brief-card comic-card comic-bottom">
         <h2>Daily Comic (XKCD)</h2>
         <p class="brief-sub" id="comic-title">Loading comic...</p>
         <a id="comic-link" href="#" target="_blank" rel="noopener noreferrer">
           <img id="comic-image" alt="Daily comic" loading="lazy">
         </a>
-      </article>
-
-      <article class="panel brief-card">
-        <h2>On This Day</h2>
-        <p id="on-this-day">Loading fact...</p>
-      </article>
-
-      <article class="panel brief-card">
-        <h2>Word of the Day</h2>
-        <p id="word-of-day">Loading word...</p>
       </article>
     </section>
   </main>
@@ -125,7 +125,7 @@
 
       function truncate(text, max) {
         const clean = safeText(text, "");
-        return clean.length > max ? clean.slice(0, max - 1).trim() + "…" : clean;
+        return clean.length > max ? clean.slice(0, max - 1).trim() + "..." : clean;
       }
 
       function weatherCodeToText(code) {
@@ -138,14 +138,14 @@
       }
 
       function weatherCodeToIcon(code) {
-        if (code === 0) return "SUN";
-        if (code <= 3) return "CLD";
-        if (code === 45 || code === 48) return "FOG";
-        if (code >= 51 && code <= 67) return "RAN";
-        if (code >= 71 && code <= 77) return "SNW";
-        if (code >= 80 && code <= 82) return "SHR";
-        if (code >= 95) return "STM";
-        return "VAR";
+        if (code === 0) return ":)";
+        if (code <= 3) return ":|";
+        if (code === 45 || code === 48) return "-_-";
+        if (code >= 51 && code <= 67) return ":'(";
+        if (code >= 71 && code <= 77) return "*_ *".replace(" ", "");
+        if (code >= 80 && code <= 82) return ":/";
+        if (code >= 95) return ">:(";
+        return ":?";
       }
 
       function moonData(date) {
@@ -195,7 +195,6 @@
         ctx.fillRect(0, 0, width, height);
 
         const temps = data.map(function (d) { return d.temp; });
-        const precip = data.map(function (d) { return d.precip; });
         const tempMin = Math.floor(Math.min.apply(null, temps) - 3);
         const tempMax = Math.ceil(Math.max.apply(null, temps) + 3);
         const tempRange = Math.max(1, tempMax - tempMin);
@@ -242,17 +241,18 @@
         const maxTemp = Math.max.apply(null, temps);
         const minTemp = Math.min.apply(null, temps);
 
-        ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
+        ctx.font = "14px Space Grotesk, Segoe UI, sans-serif";
         ctx.textAlign = "center";
         data.forEach(function (entry, idx) {
           const show = idx % 2 === 0 || entry.temp === maxTemp || entry.temp === minTemp || idx === data.length - 1;
           if (!show) return;
           const x = sampledWeather[idx].x;
-          const y = yTemp(entry.temp) - 6;
-          ctx.fillStyle = "#aee7ff";
+          const y = yTemp(entry.temp) - 8;
+          ctx.fillStyle = "#c7eeff";
           ctx.fillText(Math.round(entry.temp) + "°", x, y);
         });
 
+        ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
         data.forEach(function (entry, idx) {
           const x = sampledWeather[idx].x;
           ctx.fillStyle = "#9db0d6";
@@ -288,8 +288,8 @@
           if (minDist > 40) { weatherTooltip.hidden = true; return; }
           const item = nearest.data;
           weatherTooltip.hidden = false;
-          weatherTooltip.textContent = item.label + " | " + Math.round(item.temp) + "F | " + weatherCodeToText(item.code) + " | " + Math.round(item.precip) + "% precip";
-          weatherTooltip.style.left = Math.max(8, Math.min(event.offsetX + 10, hourlyChart.clientWidth - 240)) + "px";
+          weatherTooltip.textContent = item.label + " | " + Math.round(item.temp) + "F | " + weatherCodeToText(item.code) + " " + weatherCodeToIcon(item.code) + " | " + Math.round(item.precip) + "% precip";
+          weatherTooltip.style.left = Math.max(8, Math.min(event.offsetX + 10, hourlyChart.clientWidth - 260)) + "px";
           weatherTooltip.style.top = Math.max(8, event.offsetY - 36) + "px";
         });
         hourlyChart.addEventListener("mouseleave", function () { weatherTooltip.hidden = true; });
