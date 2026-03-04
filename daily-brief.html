@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Daily Brief | Scout OG</title>
-  <link rel="stylesheet" href="/styles.css?v=6">
+  <link rel="stylesheet" href="/styles.css?v=7">
 </head>
 <body>
   <header class="site-header">
@@ -51,7 +51,7 @@
       <article class="panel brief-card news-card-wide">
         <div class="brief-card-head">
           <h2>Top Stories (Past 24 Hours)</h2>
-          <p class="brief-sub">Politics, Tech, Sports, World, U.S., and Business.</p>
+          <p class="brief-sub">Priority coverage: U.S., Politics, and World; plus major Business/Tech when relevant.</p>
         </div>
         <div id="news-grid" class="news-grid"></div>
       </article>
@@ -61,8 +61,10 @@
           <h2>Weather (Next 24 Hours)</h2>
           <p id="weather-summary" class="brief-sub">Loading weather...</p>
         </div>
-        <canvas id="hourly-chart" width="980" height="340" aria-label="Hourly weather chart"></canvas>
-        <p class="brief-sub chart-note">Bars: temperature (F). Line: precipitation probability (%).</p>
+        <div class="weather-chart-wrap">
+          <canvas id="hourly-chart" width="960" height="330" aria-label="Hourly weather chart"></canvas>
+          <div id="weather-tooltip" class="weather-tooltip" hidden></div>
+        </div>
       </article>
 
       <article class="panel brief-card comic-card side-comic">
@@ -94,6 +96,7 @@
       const moonLabelEl = document.getElementById("moon-label");
       const weatherSummaryEl = document.getElementById("weather-summary");
       const hourlyChart = document.getElementById("hourly-chart");
+      const weatherTooltip = document.getElementById("weather-tooltip");
       const zipForm = document.getElementById("zip-form");
       const zipInput = document.getElementById("zip-input");
       const useLocationBtn = document.getElementById("use-location");
@@ -105,6 +108,8 @@
       const comicImageEl = document.getElementById("comic-image");
 
       const now = new Date();
+      const sampledWeather = [];
+
       dateEl.textContent = now.toLocaleDateString(undefined, {
         weekday: "long",
         month: "long",
@@ -119,6 +124,11 @@
 
       function stripHtml(input) {
         return safeText(String(input || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "), "");
+      }
+
+      function truncate(text, max) {
+        const clean = safeText(text, "");
+        return clean.length > max ? clean.slice(0, max - 1).trim() + "…" : clean;
       }
 
       function weatherCodeToText(code) {
@@ -158,28 +168,17 @@
 
       function moonImageDataUri(idx) {
         const base = '<circle cx="40" cy="40" r="22" fill="#1a2740"/>';
-        let lit = '';
+        let lit = "";
 
-        if (idx === 1) {
-          lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="32" cy="40" r="22" fill="#1a2740"/>';
-        } else if (idx === 2) {
-          lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="40" y="18" width="22" height="44" fill="#f4f0d2" clip-path="url(#moonclip)"/>';
-        } else if (idx === 3) {
-          lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="48" cy="40" r="22" fill="#1a2740"/>';
-        } else if (idx === 4) {
-          lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/>';
-        } else if (idx === 5) {
-          lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="32" cy="40" r="22" fill="#1a2740"/>';
-        } else if (idx === 6) {
-          lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="18" y="18" width="22" height="44" fill="#f4f0d2" clip-path="url(#moonclip)"/>';
-        } else if (idx === 7) {
-          lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="48" cy="40" r="22" fill="#1a2740"/>';
-        }
+        if (idx === 1) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="32" cy="40" r="22" fill="#1a2740"/>';
+        else if (idx === 2) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="40" y="18" width="22" height="44" fill="#f4f0d2" clip-path="url(#moonclip)"/>';
+        else if (idx === 3) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="48" cy="40" r="22" fill="#1a2740"/>';
+        else if (idx === 4) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/>';
+        else if (idx === 5) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="32" cy="40" r="22" fill="#1a2740"/>';
+        else if (idx === 6) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="18" y="18" width="22" height="44" fill="#f4f0d2" clip-path="url(#moonclip)"/>';
+        else if (idx === 7) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="48" cy="40" r="22" fill="#1a2740"/>';
 
-        const svg =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">' +
-          '<rect width="80" height="80" rx="14" fill="#0c1629"/>' +
-          base + lit + '</svg>';
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="14" fill="#0c1629"/>' + base + lit + '</svg>';
         return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
 
@@ -189,29 +188,36 @@
         moonLabelEl.textContent = moon.label;
       }
 
-      function renderHourlyChart(temps, precipProb, codes, labels) {
+      function drawWeatherChart(data) {
+        sampledWeather.length = 0;
+        data.forEach(function (entry, idx) {
+          sampledWeather.push({ index: idx, x: 0, data: entry });
+        });
+
         const ctx = hourlyChart.getContext("2d");
         const width = hourlyChart.width;
         const height = hourlyChart.height;
-        ctx.clearRect(0, 0, width, height);
-
-        ctx.fillStyle = "#071223";
-        ctx.fillRect(0, 0, width, height);
-
-        const pad = { top: 24, right: 46, bottom: 64, left: 44 };
+        const pad = { top: 24, right: 48, bottom: 60, left: 44 };
         const chartW = width - pad.left - pad.right;
         const chartH = height - pad.top - pad.bottom;
 
-        const tempMin = Math.floor(Math.min.apply(null, temps) - 4);
-        const tempMax = Math.ceil(Math.max.apply(null, temps) + 4);
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#071223";
+        ctx.fillRect(0, 0, width, height);
+
+        const temps = data.map(function (d) { return d.temp; });
+        const precip = data.map(function (d) { return d.precip; });
+
+        const tempMin = Math.floor(Math.min.apply(null, temps) - 3);
+        const tempMax = Math.ceil(Math.max.apply(null, temps) + 3);
         const tempRange = Math.max(1, tempMax - tempMin);
 
         function yTemp(val) {
           return pad.top + ((tempMax - val) / tempRange) * chartH;
         }
 
-        function yPrecip(prob) {
-          return pad.top + ((100 - prob) / 100) * chartH;
+        function yPrecip(val) {
+          return pad.top + ((100 - val) / 100) * chartH;
         }
 
         ctx.strokeStyle = "#203253";
@@ -224,34 +230,35 @@
           ctx.stroke();
         }
 
-        const step = chartW / temps.length;
-        const barW = Math.max(8, step * 0.64);
+        const step = chartW / data.length;
+        const barW = Math.max(12, step * 0.66);
 
         ctx.fillStyle = "#2ca8da";
-        temps.forEach(function (temp, idx) {
+        data.forEach(function (entry, idx) {
           const x = pad.left + idx * step + (step - barW) / 2;
-          const y = yTemp(temp);
+          const y = yTemp(entry.temp);
           const base = yTemp(tempMin);
           ctx.fillRect(x, y, barW, Math.max(2, base - y));
+          sampledWeather[idx].x = x + barW / 2;
         });
 
         ctx.strokeStyle = "#facc15";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        precipProb.forEach(function (prob, idx) {
-          const x = pad.left + idx * step + step / 2;
-          const y = yPrecip(prob);
+        data.forEach(function (entry, idx) {
+          const x = sampledWeather[idx].x;
+          const y = yPrecip(entry.precip);
           if (idx === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
         ctx.stroke();
 
         ctx.fillStyle = "#facc15";
-        precipProb.forEach(function (prob, idx) {
-          const x = pad.left + idx * step + step / 2;
-          const y = yPrecip(prob);
+        data.forEach(function (entry, idx) {
+          const x = sampledWeather[idx].x;
+          const y = yPrecip(entry.precip);
           ctx.beginPath();
-          ctx.arc(x, y, 2.3, 0, Math.PI * 2);
+          ctx.arc(x, y, 2.5, 0, Math.PI * 2);
           ctx.fill();
         });
 
@@ -260,23 +267,21 @@
 
         ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
         ctx.textAlign = "center";
-        temps.forEach(function (temp, idx) {
-          const show = idx % 4 === 0 || temp === maxTemp || temp === minTemp || idx === temps.length - 1;
+        data.forEach(function (entry, idx) {
+          const show = idx % 2 === 0 || entry.temp === maxTemp || entry.temp === minTemp || idx === data.length - 1;
           if (!show) return;
-          const x = pad.left + idx * step + step / 2;
-          const y = yTemp(temp) - 6;
+          const x = sampledWeather[idx].x;
+          const y = yTemp(entry.temp) - 6;
           ctx.fillStyle = "#aee7ff";
-          ctx.fillText(Math.round(temp) + "°", x, y);
+          ctx.fillText(Math.round(entry.temp) + "°", x, y);
         });
 
-        codes.forEach(function (code, idx) {
-          const x = pad.left + idx * step + step / 2;
+        data.forEach(function (entry, idx) {
+          const x = sampledWeather[idx].x;
           ctx.fillStyle = "#9db0d6";
-          ctx.fillText(weatherCodeToIcon(code), x, height - 30);
-          if (idx % 3 === 0 || idx === temps.length - 1) {
-            ctx.fillStyle = "#7f92ba";
-            ctx.fillText(labels[idx], x, height - 14);
-          }
+          ctx.fillText(weatherCodeToIcon(entry.code), x, height - 30);
+          ctx.fillStyle = "#7f92ba";
+          ctx.fillText(entry.label, x, height - 13);
         });
 
         ctx.textAlign = "left";
@@ -290,13 +295,46 @@
         ctx.fillText("0%", width - 4, pad.top + chartH);
       }
 
+      function bindWeatherTooltip() {
+        hourlyChart.addEventListener("mousemove", function (event) {
+          if (!sampledWeather.length) return;
+          const rect = hourlyChart.getBoundingClientRect();
+          const x = (event.clientX - rect.left) * (hourlyChart.width / rect.width);
+
+          let nearest = sampledWeather[0];
+          let minDist = Math.abs(nearest.x - x);
+          for (let i = 1; i < sampledWeather.length; i += 1) {
+            const d = Math.abs(sampledWeather[i].x - x);
+            if (d < minDist) {
+              minDist = d;
+              nearest = sampledWeather[i];
+            }
+          }
+
+          if (minDist > 40) {
+            weatherTooltip.hidden = true;
+            return;
+          }
+
+          const item = nearest.data;
+          weatherTooltip.hidden = false;
+          weatherTooltip.textContent = item.label + " | " + Math.round(item.temp) + "F | " + weatherCodeToText(item.code) + " | " + Math.round(item.precip) + "% precip";
+          weatherTooltip.style.left = Math.max(8, Math.min(event.offsetX + 10, hourlyChart.clientWidth - 240)) + "px";
+          weatherTooltip.style.top = Math.max(8, event.offsetY - 36) + "px";
+        });
+
+        hourlyChart.addEventListener("mouseleave", function () {
+          weatherTooltip.hidden = true;
+        });
+      }
+
       function renderWeather(data, locationLabel) {
         const current = data.current || {};
         const hourly = data.hourly || {};
         const times = hourly.time || [];
         const temps = hourly.temperature_2m || [];
         const codes = hourly.weather_code || [];
-        const precipProb = hourly.precipitation_probability || [];
+        const precip = hourly.precipitation_probability || [];
 
         if (!temps.length || !times.length) {
           weatherSummaryEl.textContent = "Weather unavailable right now.";
@@ -308,26 +346,29 @@
         });
         const offset = startIdx === -1 ? 0 : startIdx;
 
-        const nextTemps = temps.slice(offset, offset + 24);
-        const nextTimes = times.slice(offset, offset + 24);
-        const nextCodes = codes.slice(offset, offset + 24);
-        const nextPrecip = precipProb.slice(offset, offset + 24);
+        const sampled = [];
+        for (let i = 0; i < 24; i += 2) {
+          const idx = offset + i;
+          if (!times[idx]) break;
+          const date = new Date(times[idx]);
+          sampled.push({
+            temp: temps[idx],
+            code: codes[idx],
+            precip: precip[idx] || 0,
+            label: date.getHours() + ":00"
+          });
+        }
 
-        const labels = nextTimes.map(function (iso) {
-          const d = new Date(iso);
-          return d.getHours() + ":00";
-        });
-
-        const precipPeak = Math.max.apply(null, nextPrecip);
+        const precipPeak = Math.max.apply(null, sampled.map(function (d) { return d.precip; }));
         weatherSummaryEl.textContent =
           "Now " + Math.round(current.temperature_2m) + "F (feels " + Math.round(current.apparent_temperature) + "F), " +
-          weatherCodeToText(current.weather_code) + ". Precip chance peaks at " + Math.round(precipPeak) + "% in next 24h.";
+          weatherCodeToText(current.weather_code) + ". Peak precip chance: " + Math.round(precipPeak) + "%";
 
         locationEl.textContent = locationLabel;
-        renderHourlyChart(nextTemps, nextPrecip, nextCodes, labels);
+        drawWeatherChart(sampled);
       }
 
-      async function weatherByCoords(lat, lon, locationLabel) {
+      async function weatherByCoords(lat, lon, label) {
         const url =
           "https://api.open-meteo.com/v1/forecast?latitude=" + encodeURIComponent(lat) +
           "&longitude=" + encodeURIComponent(lon) +
@@ -336,16 +377,16 @@
           "&temperature_unit=fahrenheit&timezone=auto";
 
         const response = await fetch(url);
-        if (!response.ok) throw new Error("Weather lookup failed");
+        if (!response.ok) throw new Error("weather failed");
         const data = await response.json();
-        renderWeather(data, locationLabel);
+        renderWeather(data, label);
       }
 
       async function reverseGeocode(lat, lon) {
         try {
           const url = "https://geocoding-api.open-meteo.com/v1/reverse?latitude=" + encodeURIComponent(lat) + "&longitude=" + encodeURIComponent(lon) + "&language=en&count=1";
           const response = await fetch(url);
-          if (!response.ok) throw new Error("Reverse geocode failed");
+          if (!response.ok) throw new Error("reverse failed");
           const data = await response.json();
           const top = data.results && data.results[0];
           if (!top) return "Current Location";
@@ -385,10 +426,10 @@
 
         try {
           const zipResponse = await fetch("https://api.zippopotam.us/us/" + encodeURIComponent(trimmed));
-          if (!zipResponse.ok) throw new Error("ZIP lookup failed");
+          if (!zipResponse.ok) throw new Error("zip failed");
           const zipData = await zipResponse.json();
           const place = zipData.places && zipData.places[0];
-          if (!place) throw new Error("ZIP not found");
+          if (!place) throw new Error("zip missing");
 
           const lat = Number(place.latitude);
           const lon = Number(place.longitude);
@@ -404,53 +445,59 @@
         const fromDate = dayAgo.toISOString().slice(0, 10);
         const toDate = now.toISOString().slice(0, 10);
 
-        const categories = [
-          { label: "World", section: "world" },
-          { label: "Politics", section: "politics" },
-          { label: "Tech", section: "technology" },
-          { label: "Sports", section: "sport" },
-          { label: "U.S.", section: "us-news" },
-          { label: "Business", section: "business" }
+        const priorities = [
+          { label: "U.S.", section: "us-news", limit: 2 },
+          { label: "Politics", section: "politics", limit: 2 },
+          { label: "World", section: "world", limit: 2 },
+          { label: "Business", section: "business", limit: 1 },
+          { label: "Tech", section: "technology", limit: 1 }
         ];
 
         try {
-          const stories = await Promise.all(categories.map(async function (cat) {
+          const bucketed = await Promise.all(priorities.map(async function (cat) {
             const url =
               "https://content.guardianapis.com/search?api-key=test" +
               "&section=" + encodeURIComponent(cat.section) +
               "&from-date=" + encodeURIComponent(fromDate) +
               "&to-date=" + encodeURIComponent(toDate) +
-              "&order-by=newest&page-size=1&show-fields=thumbnail,trailText";
+              "&order-by=newest&page-size=" + encodeURIComponent(cat.limit) +
+              "&show-fields=thumbnail,trailText";
 
             const response = await fetch(url);
-            if (!response.ok) return null;
+            if (!response.ok) return [];
             const data = await response.json();
-            const result = data.response && data.response.results && data.response.results[0];
-            if (!result) return null;
-            return {
-              category: cat.label,
-              title: result.webTitle,
-              url: result.webUrl,
-              image: result.fields && result.fields.thumbnail,
-              summary: stripHtml(result.fields && result.fields.trailText)
-            };
+            const results = (data.response && data.response.results) || [];
+
+            return results.map(function (result) {
+              return {
+                category: cat.label,
+                title: safeText(result.webTitle, "Untitled"),
+                url: result.webUrl,
+                image: result.fields && result.fields.thumbnail,
+                summary: truncate(stripHtml(result.fields && result.fields.trailText), 170),
+                published: result.webPublicationDate || ""
+              };
+            });
           }));
 
-          const valid = stories.filter(Boolean);
-          if (!valid.length) throw new Error("No stories");
+          const stories = bucketed.flat().sort(function (a, b) {
+            return new Date(b.published).getTime() - new Date(a.published).getTime();
+          }).slice(0, 6);
+
+          if (!stories.length) throw new Error("news empty");
 
           newsGridEl.innerHTML = "";
-          valid.forEach(function (item) {
+          stories.forEach(function (item) {
             const card = document.createElement("article");
             card.className = "news-item";
-            const summary = safeText(item.summary, "Tap through for full coverage.");
+            const summary = item.summary || ("Major update in " + item.category + ". Read for details.");
 
             card.innerHTML =
               (item.image ? "<img src=\"" + item.image + "\" alt=\"News image\" loading=\"lazy\">" : "") +
               "<div class=\"news-body\">" +
-                "<span class=\"news-tag\">" + item.category + "</span>" +
-                "<a href=\"" + item.url + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + safeText(item.title, "Untitled") + "</a>" +
-                "<p>" + summary + "</p>" +
+              "<span class=\"news-tag\">" + item.category + "</span>" +
+              "<a href=\"" + item.url + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + item.title + "</a>" +
+              "<p>" + summary + "</p>" +
               "</div>";
             newsGridEl.appendChild(card);
           });
@@ -460,19 +507,37 @@
       }
 
       async function loadOnThisDay() {
+        const month = now.getMonth() + 1;
+        const day = now.getDate();
+
         try {
-          const month = now.getMonth() + 1;
-          const day = now.getDate();
-          const endpoint = "https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/events/" + month + "/" + day;
-          const response = await fetch(endpoint);
-          if (!response.ok) throw new Error("on this day failed");
-          const data = await response.json();
-          const event = data.events && data.events[0];
-          if (!event) throw new Error("missing event");
-          onThisDayEl.textContent = event.year + ": " + safeText(event.text, "Historical event unavailable.");
+          const primary = await fetch("https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/events/" + month + "/" + day);
+          if (primary.ok) {
+            const data = await primary.json();
+            const event = data.events && data.events[0];
+            if (event && event.text) {
+              onThisDayEl.textContent = event.year + ": " + safeText(event.text, "Historical event unavailable.");
+              return;
+            }
+          }
         } catch (_) {
-          onThisDayEl.textContent = "On-this-day fact unavailable right now.";
         }
+
+        try {
+          const backup = await fetch("https://history.muffinlabs.com/date");
+          if (backup.ok) {
+            const data = await backup.json();
+            const events = data.data && data.data.Events;
+            if (events && events.length) {
+              const pick = events[0];
+              onThisDayEl.textContent = pick.year + ": " + safeText(pick.text, "Historical event unavailable.");
+              return;
+            }
+          }
+        } catch (_) {
+        }
+
+        onThisDayEl.textContent = "On this day: notable world events occurred across politics, science, and culture. Source feeds are temporarily unavailable.";
       }
 
       async function loadWordOfDay() {
@@ -485,7 +550,7 @@
 
         try {
           const response = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(chosen));
-          if (!response.ok) throw new Error("dictionary failed");
+          if (!response.ok) throw new Error("dict failed");
           const data = await response.json();
           const meaning = data[0] && data[0].meanings && data[0].meanings[0];
           const definition = meaning && meaning.definitions && meaning.definitions[0] && meaning.definitions[0].definition;
@@ -521,6 +586,7 @@
         loadWeatherFromGeolocation();
       });
 
+      bindWeatherTooltip();
       renderMoon();
       loadWeatherFromGeolocation();
       loadNews();
