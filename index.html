@@ -83,6 +83,14 @@
           <img id="comic-image" alt="Daily comic" loading="lazy">
         </a>
       </article>
+
+      <article class="panel brief-card market-side">
+        <h2>Market Snapshot (1D)</h2>
+        <p class="brief-sub">SPY, VOO, NKE</p>
+        <div id="market-list" class="market-list">
+          <p class="brief-sub">Loading quotes...</p>
+        </div>
+      </article>
     </section>
   </main>
 
@@ -104,6 +112,7 @@
       const comicTitleEl = document.getElementById("comic-title");
       const comicLinkEl = document.getElementById("comic-link");
       const comicImageEl = document.getElementById("comic-image");
+      const marketListEl = document.getElementById("market-list");
 
       const now = new Date();
       const sampledWeather = [];
@@ -250,7 +259,7 @@
           const x = sampledWeather[idx].x;
           const y = yTemp(entry.temp) - 10;
           ctx.fillStyle = "#c7eeff";
-          ctx.fillText(Math.round(entry.temp) + "�", x, y);
+          ctx.fillText(Math.round(entry.temp) + "\u00B0", x, y);
         });
 
         data.forEach(function (entry, idx) {
@@ -258,7 +267,7 @@
           ctx.font = "24px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Space Grotesk, sans-serif";
           ctx.fillStyle = "#9db0d6";
           ctx.fillText(weatherCodeToIcon(entry.code), x, height - 30);
-          ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
+          ctx.font = "14px Space Grotesk, Segoe UI, sans-serif";
           ctx.fillStyle = "#7f92ba";
           ctx.fillText(entry.label, x, height - 13);
         });
@@ -314,7 +323,7 @@
           const idx = offset + i;
           if (!times[idx]) break;
           const d = new Date(times[idx]);
-          sampled.push({ temp: temps[idx], code: codes[idx], precip: precip[idx] || 0, label: d.getHours() + ":00" });
+          sampled.push({ temp: temps[idx], code: codes[idx], precip: precip[idx] || 0, label: d.toLocaleTimeString([], { hour: "numeric", hour12: true }) });
         }
 
         const precipPeak = Math.max.apply(null, sampled.map(function (d) { return d.precip; }));
@@ -457,6 +466,14 @@
         onThisDayEl.textContent = "On this day: notable world events occurred across politics, science, and culture. Source feeds are temporarily unavailable.";
       }
 
+      function setWordDefinition(word, definition) {
+        wordEl.innerHTML = "";
+        const wordStrong = document.createElement("strong");
+        wordStrong.textContent = word + ":";
+        wordEl.appendChild(wordStrong);
+        wordEl.appendChild(document.createTextNode(" " + definition));
+      }
+
       async function loadWordOfDay() {
         const satWords = ["obsequious", "pulchritude", "antediluvian", "perspicacious", "ephemeral", "equanimity", "sesquipedalian", "laconic", "munificent", "ubiquitous", "capricious", "intransigent"];
         const idx = Math.floor(now.getTime() / 86400000) % satWords.length;
@@ -468,12 +485,57 @@
           const data = await res.json();
           const meaning = data[0] && data[0].meanings && data[0].meanings[0];
           const definition = meaning && meaning.definitions && meaning.definitions[0] && meaning.definitions[0].definition;
-          wordEl.textContent = chosen + ": " + safeText(definition, "Definition unavailable.");
+          setWordDefinition(chosen, safeText(definition, "Definition unavailable."));
         } catch (_) {
-          wordEl.textContent = chosen + ": definition unavailable right now.";
+          setWordDefinition(chosen, "definition unavailable right now.");
         }
       }
 
+      function formatSigned(value, digits) {
+        const n = Number(value || 0);
+        const fixed = n.toFixed(digits);
+        return (n > 0 ? "+" : "") + fixed;
+      }
+
+      async function loadMarkets() {
+        const symbols = ["SPY", "VOO", "NKE"];
+        const url = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=" + encodeURIComponent(symbols.join(","));
+
+        try {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) throw new Error("quote failed");
+          const data = await response.json();
+          const results = (data.quoteResponse && data.quoteResponse.result) || [];
+          if (!results.length) throw new Error("quote empty");
+
+          const bySymbol = {};
+          results.forEach(function (row) { bySymbol[row.symbol] = row; });
+
+          marketListEl.innerHTML = "";
+          symbols.forEach(function (symbol) {
+            const row = bySymbol[symbol];
+            if (!row) return;
+            const price = Number(row.regularMarketPrice || 0);
+            const change = Number(row.regularMarketChange || 0);
+            const pct = Number(row.regularMarketChangePercent || 0);
+            const tone = change > 0 ? "up" : (change < 0 ? "down" : "flat");
+
+            const item = document.createElement("div");
+            item.className = "market-item " + tone;
+            item.innerHTML =
+              "<div class=\"market-symbol\">" + symbol + "</div>" +
+              "<div class=\"market-price\">$" + price.toFixed(2) + "</div>" +
+              "<div class=\"market-change\">" + formatSigned(change, 2) + " (" + formatSigned(pct, 2) + "%)</div>";
+            marketListEl.appendChild(item);
+          });
+
+          if (!marketListEl.children.length) {
+            throw new Error("symbols unavailable");
+          }
+        } catch (_) {
+          marketListEl.innerHTML = "<p class=\"brief-sub\">Market data is unavailable right now. Refresh shortly.</p>";
+        }
+      }
       async function loadComic() {
         try {
           const response = await fetch("https://xkcd.vercel.app/?comic=latest");
@@ -503,6 +565,7 @@
       loadOnThisDay();
       loadWordOfDay();
       loadComic();
+      loadMarkets();
     })();
   </script>
 </body>

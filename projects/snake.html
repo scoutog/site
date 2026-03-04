@@ -82,35 +82,19 @@
       font-size: 0.84rem;
       letter-spacing: 0.02em;
     }
-
     .color-picker {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 42px;
-      height: 26px;
       border: 1px solid #27436f;
       border-radius: 999px;
-      padding: 0;
-      background: transparent;
+      padding: 0.26rem 0.65rem;
+      min-width: 96px;
+      background: #13233d;
+      color: #ffffff;
+      font: inherit;
+      font-size: 0.83rem;
       cursor: pointer;
     }
 
-    .color-picker::-webkit-color-swatch-wrapper {
-      padding: 0;
-      border-radius: 999px;
-    }
-
-    .color-picker::-webkit-color-swatch {
-      border: 0;
-      border-radius: 999px;
-    }
-
-    .color-picker::-moz-color-swatch {
-      border: 0;
-      border-radius: 999px;
-    }
-
-    .snake-board-wrap {
+.snake-board-wrap {
       border: 1px solid var(--line);
       border-radius: 16px;
       background: #091223;
@@ -188,11 +172,25 @@
       <div class="snake-pickers" aria-label="Color pickers">
         <label class="color-box" for="snake-color">
           <span>Snake</span>
-          <input id="snake-color" class="color-picker" type="color" value="#7cf7d2" title="Snake color" aria-label="Snake color">
+          <select id="snake-color" class="color-picker" title="Snake color" aria-label="Snake color">
+            <option value="#7cf7d2">Mint</option>
+            <option value="#56d4ff">Cyan</option>
+            <option value="#f97316">Orange</option>
+            <option value="#ef4444">Red</option>
+            <option value="#a855f7">Violet</option>
+            <option value="#facc15">Gold</option>
+          </select>
         </label>
         <label class="color-box" for="food-color">
           <span>Food</span>
-          <input id="food-color" class="color-picker" type="color" value="#56d4ff" title="Food color" aria-label="Food color">
+          <select id="food-color" class="color-picker" title="Food color" aria-label="Food color">
+            <option value="#56d4ff">Cyan</option>
+            <option value="#f43f5e">Rose</option>
+            <option value="#facc15">Gold</option>
+            <option value="#22c55e">Green</option>
+            <option value="#a855f7">Violet</option>
+            <option value="#fb923c">Coral</option>
+          </select>
         </label>
       </div>
 
@@ -222,8 +220,8 @@
       const stateEl = document.getElementById("state");
       const startBtn = document.getElementById("start-btn");
       const restartBtn = document.getElementById("restart-btn");
-      const snakeColorInput = document.getElementById("snake-color");
-      const foodColorInput = document.getElementById("food-color");
+      const snakeColorSelect = document.getElementById("snake-color");
+      const foodColorSelect = document.getElementById("food-color");
 
       const tileSize = 24;
       const tiles = board.width / tileSize;
@@ -239,8 +237,8 @@
       let running = false;
       let gameOver = false;
 
-      let snakeColor = snakeColorInput.value;
-      let foodColor = foodColorInput.value;
+      let snakeColor = snakeColorSelect.value;
+      let foodColor = foodColorSelect.value;
 
       function randomCell() {
         return {
@@ -286,16 +284,17 @@
         return "#" + [r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("");
       }
 
-      function applyPickerVisual(inputEl) {
-        const hex = inputEl.value;
+      function applyPickerVisual(selectEl) {
+        const hex = selectEl.value;
         const raw = hex.replace("#", "");
         const r = parseInt(raw.slice(0, 2), 16);
         const g = parseInt(raw.slice(2, 4), 16);
         const b = parseInt(raw.slice(4, 6), 16);
         const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-        inputEl.style.background = hex;
-        inputEl.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
-        const wrapper = inputEl.closest(".color-box");
+        selectEl.style.background = hex;
+        selectEl.style.color = luminance > 0.55 ? "#0b1020" : "#ffffff";
+        selectEl.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
+        const wrapper = selectEl.closest(".color-box");
         if (wrapper) {
           wrapper.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
           wrapper.style.background = "linear-gradient(165deg, " + shade(hex, -140) + ", " + shade(hex, -108) + ")";
@@ -459,15 +458,15 @@
         });
       });
 
-      snakeColorInput.addEventListener("change", function () {
-        snakeColor = snakeColorInput.value;
-        applyPickerVisual(snakeColorInput);
+      snakeColorSelect.addEventListener("change", function () {
+        snakeColor = snakeColorSelect.value;
+        applyPickerVisual(snakeColorSelect);
         draw();
       });
 
-      foodColorInput.addEventListener("change", function () {
-        foodColor = foodColorInput.value;
-        applyPickerVisual(foodColorInput);
+      foodColorSelect.addEventListener("change", function () {
+        foodColor = foodColorSelect.value;
+        applyPickerVisual(foodColorSelect);
         draw();
       });
 
@@ -475,8 +474,8 @@
       restartBtn.addEventListener("click", restartGame);
 
       loadBest();
-      applyPickerVisual(snakeColorInput);
-      applyPickerVisual(foodColorInput);
+      applyPickerVisual(snakeColorSelect);
+      applyPickerVisual(foodColorSelect);
       resetGame();
     })();
   </script>

@@ -623,6 +623,24 @@ ul {
 }
 
 
+.word-side,
+.onthisday-bottom {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.word-side p,
+.onthisday-bottom p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  line-height: 1.45;
+}
+
+.word-side p strong {
+  font-weight: 700;
+}
+
 /* Daily Brief v9 layout */
 .weather-primary {
   grid-column: 1 / span 8;
@@ -645,8 +663,55 @@ ul {
 }
 
 .comic-bottom {
-  grid-column: 1 / -1;
+  grid-column: 1 / span 8;
   grid-row: 4;
+}
+
+.market-side {
+  grid-column: 9 / span 4;
+  grid-row: 4;
+}
+
+.market-list {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.market-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0c1629;
+  padding: 0.55rem 0.6rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.market-symbol {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.market-price {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.market-change {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.market-item.up .market-change {
+  color: #6ee7b7;
+}
+
+.market-item.down .market-change {
+  color: #fca5a5;
+}
+
+.market-item.flat .market-change {
+  color: #93c5fd;
 }
 
 .news-grid {
@@ -658,7 +723,8 @@ ul {
   .word-side,
   .news-card-wide,
   .onthisday-bottom,
-  .comic-bottom {
+  .comic-bottom,
+  .market-side {
     grid-column: span 12;
     grid-row: auto;
   }
