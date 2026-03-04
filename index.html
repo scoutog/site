@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Daily Brief | Scout OG</title>
-  <link rel="stylesheet" href="/styles.css?v=10">
+  <title>Daily Brief | Scout</title>
+  <link rel="stylesheet" href="/styles.css?v=11">
 </head>
 <body>
   <header class="site-header">
     <div class="nav-wrap">
-      <a class="brand" href="/">Scout OG</a>
+      <a class="brand" href="/">Scout</a>
       <nav class="nav-links" aria-label="Primary">
         <a class="active" href="/">Daily Brief</a>
         <a href="/projects/snake.html">Snake</a>
@@ -24,7 +24,8 @@
 
   <main class="page">
     <section class="panel brief-hero-v2">
-      <div class="brief-title-wrap">        <h1 id="today-date" class="brief-title">Today</h1>
+      <div class="brief-title-wrap">
+        <h1 id="today-date" class="brief-title">Today</h1>
         <div class="brief-moon-row">
           <img id="moon-image" alt="Moon phase" class="moon-image">
           <p id="moon-label" class="brief-sub"></p>
@@ -33,7 +34,11 @@
       </div>
 
       <form id="zip-form" class="zip-form" autocomplete="on">
-        <div class="zip-head>`r`n          <label for="zip-input">Location (ZIP)</label>`r`n          <p id="brief-location" class="brief-location brief-location-right">Albany, NY</p>`r`n        </div>`r`n        <div class="zip-controls">
+        <div class="zip-head">
+          <label for="zip-input">Location (ZIP)</label>
+          <p id="brief-location" class="brief-location brief-location-right">Albany, NY</p>
+        </div>
+        <div class="zip-controls">
           <input id="zip-input" name="zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="12210" value="12210">
           <button type="submit">Update ZIP</button>
         </div>
@@ -134,14 +139,14 @@
       }
 
       function weatherCodeToIcon(code) {
-        if (code === 0) return ":)";
-        if (code <= 3) return ":|";
-        if (code === 45 || code === 48) return "-_-";
-        if (code >= 51 && code <= 67) return ":'(";
-        if (code >= 71 && code <= 77) return "*_ *".replace(" ", "");
-        if (code >= 80 && code <= 82) return ":/";
-        if (code >= 95) return ">:(";
-        return ":?";
+        if (code === 0) return "\u2600\uFE0F";
+        if (code <= 3) return "\u2601\uFE0F";
+        if (code === 45 || code === 48) return "\uD83C\uDF2B\uFE0F";
+        if (code >= 51 && code <= 67) return "\uD83C\uDF27\uFE0F";
+        if (code >= 71 && code <= 77) return "\uD83C\uDF28\uFE0F";
+        if (code >= 80 && code <= 82) return "\uD83C\uDF26\uFE0F";
+        if (code >= 95) return "\u26C8\uFE0F";
+        return "\u26C5";
       }
 
       function moonData(date) {
