@@ -796,3 +796,96 @@ ul {
     grid-template-columns: 1fr;
   }
 }
+
+/* Daily Brief v12 add-ons */
+.needtoknow-card {
+  grid-column: 1 / span 6;
+  grid-row: 4;
+}
+
+.sports-card {
+  grid-column: 7 / span 6;
+  grid-row: 4;
+}
+
+.comic-bottom {
+  grid-row: 5;
+}
+
+.market-side {
+  grid-row: 5;
+}
+
+.brief-mini-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.brief-mini-list li {
+  color: var(--text);
+}
+
+.brief-mini-list a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.brief-mini-list a:hover {
+  text-decoration: underline;
+}
+
+.brief-mini-list span {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.sports-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sports-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0c1629;
+  padding: 0.5rem 0.6rem;
+  display: grid;
+  gap: 0.15rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.sports-item:hover {
+  border-color: #36567f;
+}
+
+.sports-item .sports-league {
+  color: var(--accent);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.sports-item strong {
+  font-size: 0.9rem;
+  line-height: 1.28;
+}
+
+.sports-item span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1100px) {
+  .needtoknow-card,
+  .sports-card {
+    grid-column: span 12;
+    grid-row: auto;
+  }
+}

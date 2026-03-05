@@ -76,6 +76,23 @@
         <div id="news-grid" class="news-grid"></div>
       </article>
 
+      <article class="panel brief-card needtoknow-card">
+        <h2>Need to Know</h2>
+        <ul id="need-to-know-list" class="brief-mini-list">
+          <li>Loading key headlines...</li>
+        </ul>
+      </article>
+
+      <article class="panel brief-card sports-card">
+        <div class="brief-card-head">
+          <h2>Sports Snapshot</h2>
+          <p class="brief-sub">Live and upcoming games.</p>
+        </div>
+        <div id="sports-list" class="sports-list">
+          <p class="brief-sub">Loading sports...</p>
+        </div>
+      </article>
+
       <article class="panel brief-card comic-card comic-bottom">
         <h2>Daily Comic (XKCD)</h2>
         <p class="brief-sub" id="comic-title">Loading comic...</p>
@@ -107,6 +124,8 @@
       const zipForm = document.getElementById("zip-form");
       const zipInput = document.getElementById("zip-input");
       const newsGridEl = document.getElementById("news-grid");
+      const needToKnowEl = document.getElementById("need-to-know-list");
+      const sportsListEl = document.getElementById("sports-list");
       const onThisDayEl = document.getElementById("on-this-day");
       const wordEl = document.getElementById("word-of-day");
       const comicTitleEl = document.getElementById("comic-title");
@@ -415,6 +434,7 @@
           if (!stories.length) throw new Error("news empty");
 
           newsGridEl.innerHTML = "";
+          renderNeedToKnow(stories);
           stories.forEach(function (item) {
             const card = document.createElement("article");
             card.className = "news-item";
@@ -434,6 +454,102 @@
         }
       }
 
+      function renderNeedToKnow(stories) {
+        if (!stories || !stories.length) {
+          needToKnowEl.innerHTML = "<li>Need-to-know headlines are unavailable right now.</li>";
+          return;
+        }
+
+        const preferred = ["U.S.", "Politics", "World"];
+        const picked = [];
+
+        preferred.forEach(function (cat) {
+          const match = stories.find(function (s) {
+            return s.category === cat && !picked.some(function (p) { return p.url === s.url; });
+          });
+          if (match) picked.push(match);
+        });
+
+        stories.forEach(function (story) {
+          if (picked.length >= 3) return;
+          if (!picked.some(function (p) { return p.url === story.url; })) {
+            picked.push(story);
+          }
+        });
+
+        needToKnowEl.innerHTML = "";
+        picked.slice(0, 3).forEach(function (item) {
+          const li = document.createElement("li");
+          li.innerHTML =
+            '<a href="' + item.url + '" target="_blank" rel="noopener noreferrer">' + item.title + "</a>" +
+            '<span>' + (item.summary || ("Key update in " + item.category + ".")) + '</span>';
+          needToKnowEl.appendChild(li);
+        });
+      }
+
+      function sportUrl(league) {
+        if (league === "NBA") return "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
+        if (league === "NFL") return "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard";
+        if (league === "MLB") return "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard";
+        if (league === "NHL") return "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard";
+        return "";
+      }
+
+      function parseSportEvent(league, event) {
+        const comp = event && event.competitions && event.competitions[0];
+        if (!comp) return null;
+
+        const competitors = comp.competitors || [];
+        const home = competitors.find(function (t) { return t.homeAway === "home"; }) || competitors[0];
+        const away = competitors.find(function (t) { return t.homeAway === "away"; }) || competitors[1] || competitors[0];
+        const status = (comp.status && comp.status.type && (comp.status.type.shortDetail || comp.status.type.detail)) ||
+          new Date(event.date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+        const homeCode = home && home.team && (home.team.abbreviation || home.team.shortDisplayName || home.team.displayName) || "HOME";
+        const awayCode = away && away.team && (away.team.abbreviation || away.team.shortDisplayName || away.team.displayName) || "AWAY";
+        const homeScore = home && home.score ? home.score : "";
+        const awayScore = away && away.score ? away.score : "";
+
+        return {
+          league: league,
+          line: awayCode + (awayScore !== "" ? " " + awayScore : "") + " vs " + homeCode + (homeScore !== "" ? " " + homeScore : ""),
+          status: status,
+          url: event.links && event.links[0] && event.links[0].href ? event.links[0].href : "https://www.espn.com"
+        };
+      }
+
+      async function loadSports() {
+        const leagues = ["NBA", "NFL", "MLB", "NHL"];
+
+        try {
+          const buckets = await Promise.all(leagues.map(async function (league) {
+            const res = await fetch(sportUrl(league), { cache: "no-store" });
+            if (!res.ok) return [];
+            const data = await res.json();
+            const events = data.events || [];
+            return events.slice(0, 2).map(function (event) { return parseSportEvent(league, event); }).filter(Boolean);
+          }));
+
+          const rows = buckets.flat().slice(0, 6);
+          if (!rows.length) throw new Error("no sports");
+
+          sportsListEl.innerHTML = "";
+          rows.forEach(function (row) {
+            const item = document.createElement("a");
+            item.className = "sports-item";
+            item.href = row.url;
+            item.target = "_blank";
+            item.rel = "noopener noreferrer";
+            item.innerHTML =
+              '<span class="sports-league">' + row.league + '</span>' +
+              '<strong>' + row.line + '</strong>' +
+              '<span>' + row.status + '</span>';
+            sportsListEl.appendChild(item);
+          });
+        } catch (_) {
+          sportsListEl.innerHTML = '<p class="brief-sub">Sports snapshot unavailable right now. Refresh shortly.</p>';
+        }
+      }
       function setOnThisDay(year, text) {
         onThisDayEl.innerHTML = "";
         const yearStrong = document.createElement("strong");
@@ -626,6 +742,7 @@
       renderMoon();
       loadWeatherFromZip(zipInput.value || "12210");
       loadNews();
+      loadSports();
       loadOnThisDay();
       loadWordOfDay();
       loadMarkets();
