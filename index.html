@@ -427,14 +427,22 @@
             });
           }));
 
-          const stories = bucketed.flat().sort(function (a, b) {
+          const sortedStories = bucketed.flat().sort(function (a, b) {
             return new Date(b.published).getTime() - new Date(a.published).getTime();
-          }).slice(0, 6);
+          });
 
+          const seenUrls = {};
+          const uniqueStories = sortedStories.filter(function (item) {
+            if (!item || !item.url || seenUrls[item.url]) return false;
+            seenUrls[item.url] = true;
+            return true;
+          });
+
+          const stories = uniqueStories.slice(0, 6);
           if (!stories.length) throw new Error("news empty");
 
           newsGridEl.innerHTML = "";
-          renderNeedToKnow(stories);
+          renderNeedToKnow(uniqueStories, new Set(stories.map(function (s) { return s.url; })));
           stories.forEach(function (item) {
             const card = document.createElement("article");
             card.className = "news-item";
@@ -451,12 +459,23 @@
           });
         } catch (_) {
           newsGridEl.innerHTML = "<p>News is unavailable right now. Please refresh shortly.</p>";
+          renderNeedToKnow([], new Set());
         }
       }
 
-      function renderNeedToKnow(stories) {
+      function renderNeedToKnow(stories, excludedUrls) {
         if (!stories || !stories.length) {
           needToKnowEl.innerHTML = "<li>Need-to-know headlines are unavailable right now.</li>";
+          return;
+        }
+
+        const blocked = excludedUrls || new Set();
+        const candidates = stories.filter(function (s) {
+          return s && s.url && !blocked.has(s.url);
+        });
+
+        if (!candidates.length) {
+          needToKnowEl.innerHTML = "<li>Top Stories already cover today's essential updates.</li>";
           return;
         }
 
@@ -464,13 +483,13 @@
         const picked = [];
 
         preferred.forEach(function (cat) {
-          const match = stories.find(function (s) {
+          const match = candidates.find(function (s) {
             return s.category === cat && !picked.some(function (p) { return p.url === s.url; });
           });
           if (match) picked.push(match);
         });
 
-        stories.forEach(function (story) {
+        candidates.forEach(function (story) {
           if (picked.length >= 3) return;
           if (!picked.some(function (p) { return p.url === story.url; })) {
             picked.push(story);
