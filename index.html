@@ -76,11 +76,12 @@
         <div id="news-grid" class="news-grid"></div>
       </article>
 
-      <article class="panel brief-card needtoknow-card">
-        <h2>Need to Know</h2>
-        <ul id="need-to-know-list" class="brief-mini-list">
-          <li>Loading key headlines...</li>
-        </ul>
+      <article class="panel brief-card comic-card comic-bottom">
+        <h2>Daily Comic (XKCD)</h2>
+        <p class="brief-sub" id="comic-title">Loading comic...</p>
+        <a id="comic-link" href="#" target="_blank" rel="noopener noreferrer">
+          <img id="comic-image" alt="Daily comic" loading="lazy">
+        </a>
       </article>
 
       <article class="panel brief-card sports-card">
@@ -91,14 +92,6 @@
         <div id="sports-list" class="sports-list">
           <p class="brief-sub">Loading sports...</p>
         </div>
-      </article>
-
-      <article class="panel brief-card comic-card comic-bottom">
-        <h2>Daily Comic (XKCD)</h2>
-        <p class="brief-sub" id="comic-title">Loading comic...</p>
-        <a id="comic-link" href="#" target="_blank" rel="noopener noreferrer">
-          <img id="comic-image" alt="Daily comic" loading="lazy">
-        </a>
       </article>
 
       <article class="panel brief-card market-side">
@@ -124,7 +117,6 @@
       const zipForm = document.getElementById("zip-form");
       const zipInput = document.getElementById("zip-input");
       const newsGridEl = document.getElementById("news-grid");
-      const needToKnowEl = document.getElementById("need-to-know-list");
       const sportsListEl = document.getElementById("sports-list");
       const onThisDayEl = document.getElementById("on-this-day");
       const wordEl = document.getElementById("word-of-day");
@@ -441,9 +433,7 @@
           const stories = uniqueStories.slice(0, 6);
           if (!stories.length) throw new Error("news empty");
 
-          newsGridEl.innerHTML = "";
-          renderNeedToKnow(uniqueStories, new Set(stories.map(function (s) { return s.url; })));
-          stories.forEach(function (item) {
+          newsGridEl.innerHTML = "";          stories.forEach(function (item) {
             const card = document.createElement("article");
             card.className = "news-item";
             const summary = item.summary || ("Major update in " + item.category + ". Read for details.");
@@ -459,53 +449,8 @@
           });
         } catch (_) {
           newsGridEl.innerHTML = "<p>News is unavailable right now. Please refresh shortly.</p>";
-          renderNeedToKnow([], new Set());
         }
       }
-
-      function renderNeedToKnow(stories, excludedUrls) {
-        if (!stories || !stories.length) {
-          needToKnowEl.innerHTML = "<li>Need-to-know headlines are unavailable right now.</li>";
-          return;
-        }
-
-        const blocked = excludedUrls || new Set();
-        const candidates = stories.filter(function (s) {
-          return s && s.url && !blocked.has(s.url);
-        });
-
-        if (!candidates.length) {
-          needToKnowEl.innerHTML = "<li>Top Stories already cover today's essential updates.</li>";
-          return;
-        }
-
-        const preferred = ["U.S.", "Politics", "World"];
-        const picked = [];
-
-        preferred.forEach(function (cat) {
-          const match = candidates.find(function (s) {
-            return s.category === cat && !picked.some(function (p) { return p.url === s.url; });
-          });
-          if (match) picked.push(match);
-        });
-
-        candidates.forEach(function (story) {
-          if (picked.length >= 3) return;
-          if (!picked.some(function (p) { return p.url === story.url; })) {
-            picked.push(story);
-          }
-        });
-
-        needToKnowEl.innerHTML = "";
-        picked.slice(0, 3).forEach(function (item) {
-          const li = document.createElement("li");
-          li.innerHTML =
-            '<a href="' + item.url + '" target="_blank" rel="noopener noreferrer">' + item.title + "</a>" +
-            '<span>' + (item.summary || ("Key update in " + item.category + ".")) + '</span>';
-          needToKnowEl.appendChild(li);
-        });
-      }
-
       function sportUrl(league) {
         if (league === "NBA") return "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
         if (league === "NFL") return "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard";
