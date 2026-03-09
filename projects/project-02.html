@@ -1,1 +1,228 @@
-﻿<!doctype html><html lang="en"><head>  <meta charset="utf-8">  <meta name="viewport" content="width=device-width, initial-scale=1">  <title>Project 02: Placeholder Name | Scout</title>  <link rel="stylesheet" href="/styles.css?v=11"></head><body><header class="site-header">  <div class="nav-wrap">    <a class="brand" href="/">Scout</a>    <nav class="nav-links" aria-label="Primary">      <a href="/">Daily Brief</a>      <a class="" href="/projects/snake.html">Snake</a>      <a class="active" href="/projects/project-02.html">Project 02</a>      <a class="" href="/projects/project-03.html">Project 03</a>      <a class="" href="/projects/project-04.html">Project 04</a>      <a class="" href="/projects/project-05.html">Project 05</a>      <a class="" href="/projects/project-06.html">Project 06</a>    </nav>  </div></header>  <main class="page">    <article class="panel">      <span class="kicker">Subproject Outline</span>      <h1>Project 02: Placeholder Name</h1>      <p class="lead">Short summary placeholder: describe the main concept and what makes this project different.</p>      <div class="meta">        <div><strong>Status:</strong> Planning</div>        <div><strong>Owner:</strong> Placeholder Owner</div>        <div><strong>Timeline:</strong> QX 2026</div>        <div><strong>Priority:</strong> Medium</div>      </div>      <h2>Overview</h2>      <p>Placeholder overview content. Explain the core function and expected outcome.</p>      <h2>Goals</h2>      <ul>        <li>Goal placeholder 1</li>        <li>Goal placeholder 2</li>        <li>Goal placeholder 3</li>      </ul>      <h2>Target Audience</h2>      <p>Audience placeholder (for example: customers, creators, internal team, or partners).</p>      <h2>Tech Stack</h2>      <p>Stack placeholder (for example: HTML, CSS, JavaScript, APIs, and backend service).</p>      <h2>Next Milestone</h2>      <p>Milestone placeholder with expected deliverable and target date.</p>      <h2>Call To Action</h2>      <p>CTA placeholder: add waitlist, contact form, or demo request link.</p>    </article>  </main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project 02: New York Crime Explorer | Scout</title>
+  <link rel="stylesheet" href="/styles.css?v=11">
+  <link rel="stylesheet" href="/projects/project-02.css?v=1">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="/">Scout</a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/">Daily Brief</a>
+        <a href="/projects/snake.html">Snake</a>
+        <a class="active" href="/projects/project-02.html">Project 02</a>
+        <a href="/projects/project-03.html">Project 03</a>
+        <a href="/projects/project-04.html">Project 04</a>
+        <a href="/projects/project-05.html">Project 05</a>
+        <a href="/projects/project-06.html">Project 06</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page crime-page">
+    <section class="panel crime-hero">
+      <div class="crime-hero-copy">
+        <span class="kicker">Project 02</span>
+        <h1>New York Crime Explorer</h1>
+        <p class="lead">
+          A county-level look at crime across New York using live official state data. The default lens
+          starts with violent crime rates so murder and petty theft are not treated as equals, but you can
+          switch into property, firearm, or offense-specific views at any time.
+        </p>
+      </div>
+      <div class="crime-hero-meta">
+        <div class="crime-hero-stat">
+          <span>Latest year</span>
+          <strong id="crime-year">Loading...</strong>
+        </div>
+        <div class="crime-hero-stat">
+          <span>Geography</span>
+          <strong>County</strong>
+        </div>
+        <div class="crime-hero-stat">
+          <span>Coverage</span>
+          <strong id="crime-county-count">62 counties</strong>
+        </div>
+        <div class="crime-hero-stat">
+          <span>Source</span>
+          <strong>New York State Open Data</strong>
+        </div>
+      </div>
+      <div class="crime-hero-note">
+        <p>
+          County is the best current grain because New York publishes official statewide county totals and rates
+          through a single source. ZIP code crime data is not published with the same official statewide coverage,
+          so this version prioritizes quality and comparability.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel crime-toolbar">
+      <div class="crime-toolbar-head">
+        <div>
+          <h2>Choose a lens</h2>
+          <p class="brief-sub">
+            Map colors and rankings use rates per 100,000 residents so large counties are comparable to small ones.
+          </p>
+        </div>
+        <p id="crime-updated" class="crime-updated">Loading official data...</p>
+      </div>
+      <div class="crime-control-grid">
+        <label class="crime-control">
+          <span>Crime category</span>
+          <select id="metric-select" aria-label="Crime category"></select>
+        </label>
+        <label class="crime-control">
+          <span>Focus county</span>
+          <select id="county-select" aria-label="Focus county"></select>
+        </label>
+      </div>
+    </section>
+
+    <section class="crime-main-grid">
+      <article class="panel crime-map-panel">
+        <div class="crime-panel-head">
+          <div>
+            <h2 id="map-title">County map</h2>
+            <p id="map-subtitle" class="brief-sub">Loading statewide map...</p>
+          </div>
+          <div class="crime-map-buttons" aria-label="Map zoom controls">
+            <button type="button" id="zoom-in">Zoom in</button>
+            <button type="button" id="zoom-out">Zoom out</button>
+            <button type="button" id="zoom-reset">Reset</button>
+          </div>
+        </div>
+        <div id="crime-map-shell" class="crime-map-shell">
+          <svg id="crime-map" viewBox="0 0 720 560" role="img" aria-label="New York county crime map"></svg>
+          <div id="crime-map-tooltip" class="crime-map-tooltip" hidden></div>
+        </div>
+        <div class="crime-legend">
+          <div id="crime-legend-track" class="crime-legend-track"></div>
+          <div class="crime-legend-labels">
+            <span id="legend-min">0</span>
+            <span id="legend-mid">0</span>
+            <span id="legend-max">0</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel crime-detail-panel">
+        <div class="crime-panel-head">
+          <div>
+            <h2>County detail</h2>
+            <p class="brief-sub">Click the map, use the selector, or keep Albany as the default question.</p>
+          </div>
+        </div>
+        <div id="county-summary" class="crime-county-summary"></div>
+        <div id="county-stat-grid" class="crime-stat-grid"></div>
+        <div class="crime-breakdown-grid">
+          <section class="crime-breakdown-card">
+            <div class="crime-breakdown-head">
+              <h3>Violent mix</h3>
+              <p class="brief-sub">Share of violent incidents in the selected county.</p>
+            </div>
+            <div id="violent-breakdown" class="crime-breakdown-list"></div>
+          </section>
+          <section class="crime-breakdown-card">
+            <div class="crime-breakdown-head">
+              <h3>Property mix</h3>
+              <p class="brief-sub">Share of property incidents in the selected county.</p>
+            </div>
+            <div id="property-breakdown" class="crime-breakdown-list"></div>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <section class="crime-secondary-grid">
+      <article class="panel crime-insights-panel">
+        <div class="crime-panel-head">
+          <div>
+            <h2>Preset insights</h2>
+            <p class="brief-sub">A few starting points before you begin exploring on your own.</p>
+          </div>
+        </div>
+        <div id="insight-cards" class="crime-insight-cards"></div>
+      </article>
+
+      <article class="panel crime-rankings-panel">
+        <div class="crime-panel-head">
+          <div>
+            <h2>Top 5 and bottom 5 counties</h2>
+            <p id="ranking-subtitle" class="brief-sub">Loading rankings...</p>
+          </div>
+        </div>
+        <div class="crime-table-grid">
+          <section>
+            <h3>Highest rates</h3>
+            <table class="crime-table">
+              <thead>
+                <tr>
+                  <th scope="col">Rank</th>
+                  <th scope="col">County</th>
+                  <th scope="col">Rate</th>
+                  <th scope="col">Count</th>
+                </tr>
+              </thead>
+              <tbody id="top-table-body"></tbody>
+            </table>
+          </section>
+          <section>
+            <h3>Lowest rates</h3>
+            <table class="crime-table">
+              <thead>
+                <tr>
+                  <th scope="col">Rank</th>
+                  <th scope="col">County</th>
+                  <th scope="col">Rate</th>
+                  <th scope="col">Count</th>
+                </tr>
+              </thead>
+              <tbody id="bottom-table-body"></tbody>
+            </table>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel crime-sources-panel">
+      <div class="crime-panel-head">
+        <div>
+          <h2>Data source and design notes</h2>
+          <p class="brief-sub">Built to expand beyond New York later by swapping in new state configs and geography joins.</p>
+        </div>
+      </div>
+      <ul class="crime-source-list">
+        <li>
+          County crime rates and population:
+          <a href="https://data.ny.gov/d/34dd-6g2j" target="_blank" rel="noopener noreferrer">NYS Open Data dataset 34dd-6g2j</a>
+        </li>
+        <li>
+          County total offense categories:
+          <a href="https://data.ny.gov/d/ca8h-8gjq" target="_blank" rel="noopener noreferrer">NYS Open Data dataset ca8h-8gjq</a>
+        </li>
+        <li>
+          County boundaries for the map:
+          <a href="https://github.com/topojson/us-atlas" target="_blank" rel="noopener noreferrer">us-atlas TopoJSON, derived from U.S. Census geography</a>
+        </li>
+      </ul>
+      <p class="brief-sub">
+        Notes: New York City boroughs appear as counties because the official source is county-based.
+        Rates are shown per 100,000 residents. ZIP-level exploration can be added later if a trustworthy,
+        statewide, official source becomes available.
+      </p>
+    </section>
+
+    <p id="crime-status" class="footer-note">Loading latest county crime data...</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js" defer></script>
+  <script src="/projects/project-02.js?v=1" defer></script>
+</body>
+</html>
+
