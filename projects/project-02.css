@@ -572,3 +572,34 @@
 .trend-median {
   background: #78b6ff;
 }
+
+.crime-compare-panel {
+  margin-bottom: 1rem;
+}
+
+.crime-compare-summary {
+  margin-top: 0.85rem;
+}
+
+.crime-compare-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.crime-compare-table-wrap {
+  margin-top: 0.95rem;
+  overflow-x: auto;
+}
+
+.crime-compare-table td:last-child,
+.crime-compare-table th:last-child {
+  min-width: 150px;
+}
+
+@media (max-width: 900px) {
+  .crime-compare-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}

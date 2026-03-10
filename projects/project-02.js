@@ -202,6 +202,7 @@
     status: document.getElementById("crime-status"),
     metricSelect: document.getElementById("metric-select"),
     countySelect: document.getElementById("county-select"),
+    compareCountySelect: document.getElementById("compare-county-select"),
     mapTitle: document.getElementById("map-title"),
     mapSubtitle: document.getElementById("map-subtitle"),
     mapShell: document.getElementById("crime-map-shell"),
@@ -218,6 +219,12 @@
     trendChart: document.getElementById("crime-trend-chart"),
     violentBreakdown: document.getElementById("violent-breakdown"),
     propertyBreakdown: document.getElementById("property-breakdown"),
+    comparisonSubtitle: document.getElementById("comparison-subtitle"),
+    comparisonSummary: document.getElementById("comparison-summary"),
+    comparisonStatGrid: document.getElementById("comparison-stat-grid"),
+    comparisonPrimaryHead: document.getElementById("comparison-primary-head"),
+    comparisonSecondaryHead: document.getElementById("comparison-secondary-head"),
+    comparisonTableBody: document.getElementById("comparison-table-body"),
     insightCards: document.getElementById("insight-cards"),
     rankingSubtitle: document.getElementById("ranking-subtitle"),
     topTableBody: document.getElementById("top-table-body"),
@@ -237,6 +244,7 @@
     historyByYear: new Map(),
     selectedMetric: "index_rate",
     selectedCounty: "Albany",
+    selectedCompareCounty: "Rensselaer",
     metricExtent: null,
     colorScale: null,
     map: null
@@ -285,6 +293,10 @@
 
     els.countySelect.addEventListener("change", function () {
       focusCounty(els.countySelect.value);
+    });
+
+    els.compareCountySelect.addEventListener("change", function () {
+      setCompareCounty(els.compareCountySelect.value);
     });
 
     els.zoomIn.addEventListener("click", function () {
@@ -355,15 +367,21 @@
   }
 
   function populateCountySelect() {
-    var options = state.counties.slice().sort(function (a, b) {
+    var sortedCounties = state.counties.slice().sort(function (a, b) {
       return a.displayName.localeCompare(b.displayName);
-    }).map(function (county) {
-      var selected = county.county === state.selectedCounty ? " selected" : "";
-      return '<option value="' + county.county + '"' + selected + '>' + county.displayName + '</option>';
     });
+    var optionMarkup = sortedCounties.map(function (county) {
+      return '<option value="' + county.county + '">' + county.displayName + '</option>';
+    }).join("");
 
-    els.countySelect.innerHTML = options.join("");
+    if (!state.countiesByName.has(state.selectedCompareCounty)) {
+      state.selectedCompareCounty = fallbackCompareCounty(state.selectedCounty);
+    }
+
+    els.countySelect.innerHTML = optionMarkup;
+    els.compareCountySelect.innerHTML = optionMarkup;
     els.countySelect.value = state.selectedCounty;
+    els.compareCountySelect.value = state.selectedCompareCounty;
   }
 
   function buildHistoryRecords(rateRows, categoryRows) {
@@ -499,6 +517,8 @@
     updateLegend();
     updateTitles();
     updateCountyPanel();
+    updateTrendPanel();
+    updateComparisonPanel();
     updateInsights();
     updateTables();
   }
@@ -697,6 +717,38 @@
     }).join("");
   }
 
+  function updateComparisonPanel() {
+    var primary = selectedCountyRecord();
+    var secondary = selectedCompareCountyRecord();
+    var metric = getMetric();
+    var primaryHistory = countyHistory(primary.county);
+    var secondaryHistory = countyHistory(secondary.county);
+    var primaryTrend = lookbackComparison(primaryHistory, 5);
+    var secondaryTrend = lookbackComparison(secondaryHistory, 5);
+    var primaryRank = rankOf(sortedCounties(), primary.county);
+    var secondaryRank = rankOf(sortedCounties(), secondary.county);
+
+    els.comparisonPrimaryHead.textContent = primary.displayName;
+    els.comparisonSecondaryHead.textContent = secondary.displayName;
+    els.comparisonSubtitle.textContent = metric.label + " and core crime lenses in " + state.latestYear + ".";
+    els.comparisonSummary.innerHTML = comparisonSummary(primary, secondary, metric, primaryTrend, secondaryTrend);
+    els.comparisonStatGrid.innerHTML = [
+      statCard(primary.displayName, formatRate(primary.metrics[state.selectedMetric]), metric.label.toLowerCase() + " per 100,000"),
+      statCard(secondary.displayName, formatRate(secondary.metrics[state.selectedMetric]), metric.label.toLowerCase() + " per 100,000"),
+      statCard("Current gap", formatComparisonGap(primary.metrics[state.selectedMetric], secondary.metrics[state.selectedMetric]), metricEdgeText(primary, secondary, primary.metrics[state.selectedMetric], secondary.metrics[state.selectedMetric]))
+    ].join("");
+
+    els.comparisonTableBody.innerHTML = [
+      comparisonRow(metric.label, formatRate(primary.metrics[state.selectedMetric]), formatRate(secondary.metrics[state.selectedMetric]), metricEdgeText(primary, secondary, primary.metrics[state.selectedMetric], secondary.metrics[state.selectedMetric])),
+      comparisonRow("Crime impact score", formatRate(primary.metrics.impact_score), formatRate(secondary.metrics.impact_score), metricEdgeText(primary, secondary, primary.metrics.impact_score, secondary.metrics.impact_score)),
+      comparisonRow("Overall index crime", formatRate(primary.metrics.index_rate), formatRate(secondary.metrics.index_rate), metricEdgeText(primary, secondary, primary.metrics.index_rate, secondary.metrics.index_rate)),
+      comparisonRow("Violent crime", formatRate(primary.metrics.violent_rate), formatRate(secondary.metrics.violent_rate), metricEdgeText(primary, secondary, primary.metrics.violent_rate, secondary.metrics.violent_rate)),
+      comparisonRow("Property crime", formatRate(primary.metrics.property_rate), formatRate(secondary.metrics.property_rate), metricEdgeText(primary, secondary, primary.metrics.property_rate, secondary.metrics.property_rate)),
+      comparisonRow("5-year change", primaryTrend.value, secondaryTrend.value, trendEdgeText(primary, secondary, primaryTrend, secondaryTrend)),
+      comparisonRow("Current rank", ordinal(primaryRank) + " of " + state.counties.length, ordinal(secondaryRank) + " of " + state.counties.length, rankEdgeText(primary, secondary, primaryRank, secondaryRank)),
+      comparisonRow(metric.countLabel, integerFormat.format(primary.counts[metric.countKey]), integerFormat.format(secondary.counts[metric.countKey]), countEdgeText(primary, secondary, primary.counts[metric.countKey], secondary.counts[metric.countKey]))
+    ].join("");
+  }
   function updateInsights() {
     var metric = getMetric();
     var sorted = sortedCounties();
@@ -774,7 +826,20 @@
       return;
     }
     state.selectedCounty = countyName;
+    if (state.selectedCompareCounty === countyName) {
+      state.selectedCompareCounty = fallbackCompareCounty(countyName);
+    }
     els.countySelect.value = countyName;
+    els.compareCountySelect.value = state.selectedCompareCounty;
+    updateView();
+  }
+
+  function setCompareCounty(countyName) {
+    if (!state.countiesByName.has(countyName)) {
+      return;
+    }
+    state.selectedCompareCounty = countyName;
+    els.compareCountySelect.value = countyName;
     updateView();
   }
 
@@ -805,6 +870,20 @@
 
   function selectedCountyRecord() {
     return state.countiesByName.get(state.selectedCounty) || state.counties[0];
+  }
+
+  function selectedCompareCountyRecord() {
+    return state.countiesByName.get(state.selectedCompareCounty) || state.counties[0];
+  }
+
+  function fallbackCompareCounty(excludedCounty) {
+    var index = 0;
+    for (; index < state.counties.length; index += 1) {
+      if (state.counties[index].county !== excludedCounty) {
+        return state.counties[index].county;
+      }
+    }
+    return excludedCounty;
   }
 
   function countyHistory(countyName) {
@@ -1032,6 +1111,82 @@
     return decimalFormat.format(high / low) + "x";
   }
 
+  function comparisonSummary(primary, secondary, metric, primaryTrend, secondaryTrend) {
+    if (primary.county === secondary.county) {
+      return '<p class="crime-summary-copy">You are comparing <strong>' + primary.displayName + '</strong> to itself. Pick a different county in the compare control for a true side-by-side read.</p>';
+    }
+
+    var activePrimary = primary.metrics[state.selectedMetric];
+    var activeSecondary = secondary.metrics[state.selectedMetric];
+    var activeLeader = higherCounty(primary, secondary, activePrimary, activeSecondary);
+    var activeGap = formatComparisonGap(activePrimary, activeSecondary);
+    var impactLeader = higherCounty(primary, secondary, primary.metrics.impact_score, secondary.metrics.impact_score);
+    var activeSentence = activeGap === 'nearly tied'
+      ? primary.displayName + ' and ' + secondary.displayName + ' are effectively tied on ' + metric.label.toLowerCase()
+      : '<strong>' + activeLeader.displayName + '</strong> is higher on ' + metric.label.toLowerCase() + ' by ' + activeGap;
+    return '<p class="crime-summary-copy">' + activeSentence + '. On the weighted crime impact score, <strong>' + impactLeader.displayName + '</strong> comes out worse. Over the last 5 years, ' + primary.displayName + ' is ' + primaryTrend.directionWord + ' while ' + secondary.displayName + ' is ' + secondaryTrend.directionWord + '.</p>';
+  }
+
+  function comparisonRow(label, primaryValue, secondaryValue, edgeText) {
+    return '<tr><td>' + label + '</td><td>' + primaryValue + '</td><td>' + secondaryValue + '</td><td>' + edgeText + '</td></tr>';
+  }
+
+  function higherCounty(primary, secondary, primaryValue, secondaryValue) {
+    if (primaryValue >= secondaryValue) {
+      return primary;
+    }
+    return secondary;
+  }
+
+  function formatComparisonGap(primaryValue, secondaryValue) {
+    if (!Number.isFinite(primaryValue) || !Number.isFinite(secondaryValue)) {
+      return 'n/a';
+    }
+    if (Math.abs(primaryValue - secondaryValue) < 0.1) {
+      return 'nearly tied';
+    }
+    if (!secondaryValue) {
+      return formatRate(Math.abs(primaryValue - secondaryValue)) + ' points';
+    }
+    return integerFormat.format(Math.round(Math.abs(((primaryValue - secondaryValue) / secondaryValue) * 100))) + '%';
+  }
+
+  function metricEdgeText(primary, secondary, primaryValue, secondaryValue) {
+    if (Math.abs(primaryValue - secondaryValue) < 0.1) {
+      return 'Essentially tied';
+    }
+    return higherCounty(primary, secondary, primaryValue, secondaryValue).displayName + ' higher';
+  }
+
+  function countEdgeText(primary, secondary, primaryValue, secondaryValue) {
+    if (primaryValue === secondaryValue) {
+      return 'Same incident count';
+    }
+    return (primaryValue > secondaryValue ? primary.displayName : secondary.displayName) + ' more incidents';
+  }
+
+  function rankEdgeText(primary, secondary, primaryRank, secondaryRank) {
+    if (primaryRank === secondaryRank) {
+      return 'Same statewide rank';
+    }
+    return (primaryRank < secondaryRank ? primary.displayName : secondary.displayName) + ' ranks worse';
+  }
+
+  function trendEdgeText(primary, secondary, primaryTrend, secondaryTrend) {
+    var primaryValue = parseTrendValue(primaryTrend.value);
+    var secondaryValue = parseTrendValue(secondaryTrend.value);
+    if (primaryValue === secondaryValue) {
+      return 'Same 5-year change';
+    }
+    return (primaryValue < secondaryValue ? primary.displayName : secondary.displayName) + ' improving faster';
+  }
+
+  function parseTrendValue(value) {
+    if (value === 'Flat') {
+      return 0;
+    }
+    return Number(String(value).replace('%', '')) || 0;
+  }
   function statCard(label, value, detail) {
     return [
       '<article class="crime-stat-card">',
@@ -1076,6 +1231,17 @@
     els.mapSubtitle.textContent = message;
   }
 })();
+
+
+
+
+
+
+
+
+
+
+
 
 
 
