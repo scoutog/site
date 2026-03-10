@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project 02: New York Crime Explorer | Scout</title>
+  <title>County Crime Atlas | Scout</title>
   <link rel="stylesheet" href="/styles.css?v=11">
-  <link rel="stylesheet" href="/projects/project-02.css?v=3">
+  <link rel="stylesheet" href="/projects/project-02.css?v=6">
 </head>
 <body>
   <header class="site-header">
@@ -14,7 +14,7 @@
       <nav class="nav-links" aria-label="Primary">
         <a href="/">Daily Brief</a>
         <a href="/projects/snake.html">Snake</a>
-        <a class="active" href="/projects/project-02.html">Project 02</a>
+        <a class="active" href="/projects/project-02.html">Crime Atlas</a>
         <a href="/projects/project-03.html">Project 03</a>
         <a href="/projects/project-04.html">Project 04</a>
         <a href="/projects/project-05.html">Project 05</a>
@@ -24,62 +24,94 @@
   </header>
 
   <main class="page crime-page">
-    <section class="panel crime-hero">
-      <div class="crime-hero-copy">
-        <span class="kicker">Project 02</span>
-        <h1>New York Crime Explorer</h1>
-        <p class="lead">
-          A county-level look at crime across New York using live official state data. The default view now starts
-          with official overall index crime, and you can switch to a custom crime impact score when you want a single
-          lens that blends quantity and severity.
-        </p>
-      </div>
-      <div class="crime-hero-meta">
-        <div class="crime-hero-stat">
-          <span>Latest year</span>
-          <strong id="crime-year">Loading...</strong>
-        </div>
-        <div class="crime-hero-stat">
-          <span>Trend window</span>
-          <strong id="crime-history-window">1990-2024</strong>
-        </div>
-        <div class="crime-hero-stat">
-          <span>Geography</span>
-          <strong>County</strong>
-        </div>
-        <div class="crime-hero-stat">
-          <span>Coverage</span>
-          <strong id="crime-county-count">62 counties</strong>
-        </div>
-        <div class="crime-hero-stat">
-          <span>Source</span>
-          <strong>New York State Open Data</strong>
-        </div>
-      </div>
-      <div class="crime-hero-note">
-        <p>
-          County is the best current grain because New York publishes official statewide county totals and rates
-          through a single source. ZIP code crime data is not published with the same official statewide coverage,
-          so this version prioritizes quality and comparability.
-        </p>
-      </div>
-    </section>
-
-    <section class="panel crime-toolbar">
-      <div class="crime-toolbar-head">
+    <section class="panel crime-map-stage">
+      <div class="crime-stage-head">
         <div>
-          <h2>Choose a lens</h2>
-          <p class="brief-sub">
-            Rates and scores are normalized per 100,000 residents. Click any county to see its long-run trend and a quick read on whether conditions are getting better or worse.
+          <span class="kicker">Crime Atlas</span>
+          <h1 id="crime-title">County Crime Atlas</h1>
+          <p class="lead crime-stage-lead">
+            Start with the heatmap. Drag to pan, scroll to zoom, and switch between crime lenses to see how counties stack up.
           </p>
         </div>
-        <p id="crime-updated" class="crime-updated">Loading official data...</p>
+        <div class="crime-map-buttons" aria-label="Map zoom controls">
+          <button type="button" id="zoom-in">Zoom in</button>
+          <button type="button" id="zoom-out">Zoom out</button>
+          <button type="button" id="zoom-reset">Reset</button>
+        </div>
       </div>
-      <div class="crime-control-grid">
+
+      <div class="crime-control-grid crime-stage-controls">
+        <label class="crime-control">
+          <span>State</span>
+          <select id="state-select" aria-label="State"></select>
+        </label>
         <label class="crime-control">
           <span>Crime category</span>
           <select id="metric-select" aria-label="Crime category"></select>
         </label>
+      </div>
+
+      <div class="crime-map-panel">
+        <div class="crime-panel-head">
+          <div>
+            <h2 id="map-title">County heatmap</h2>
+            <p id="map-subtitle" class="brief-sub">Loading county map...</p>
+          </div>
+        </div>
+        <div id="crime-map-shell" class="crime-map-shell">
+          <svg id="crime-map" viewBox="0 0 720 560" role="img" aria-label="County crime map"></svg>
+          <div id="crime-map-tooltip" class="crime-map-tooltip" hidden></div>
+        </div>
+        <div class="crime-legend">
+          <div id="crime-legend-track" class="crime-legend-track"></div>
+          <div class="crime-legend-labels">
+            <span id="legend-min">0</span>
+            <span id="legend-mid">0</span>
+            <span id="legend-max">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="crime-stage-footer">
+        <div class="crime-hero-meta crime-stage-meta">
+          <div class="crime-hero-stat">
+            <span>Latest year</span>
+            <strong id="crime-year">Loading...</strong>
+          </div>
+          <div class="crime-hero-stat">
+            <span>Trend window</span>
+            <strong id="crime-history-window">Loading...</strong>
+          </div>
+          <div class="crime-hero-stat">
+            <span>Geography</span>
+            <strong>County</strong>
+          </div>
+          <div class="crime-hero-stat">
+            <span>Coverage</span>
+            <strong id="crime-county-count">Loading...</strong>
+          </div>
+          <div class="crime-hero-stat">
+            <span>Source</span>
+            <strong id="crime-source-name">Loading...</strong>
+          </div>
+        </div>
+        <div class="crime-stage-meta-copy">
+          <p id="crime-hero-note-copy" class="brief-sub crime-stage-note">Loading county coverage notes...</p>
+          <p id="crime-updated" class="crime-updated">Loading official data...</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel crime-drilldown-toolbar">
+      <div class="crime-panel-head">
+        <div>
+          <h2>County drilldown</h2>
+          <p class="brief-sub">
+            Dig into one county, compare it side by side with another, and get a direct read on whether crime is getting better or worse over time.
+          </p>
+        </div>
+      </div>
+      <div class="crime-control-grid crime-drilldown-grid">
         <label class="crime-control">
           <span>Focus county</span>
           <select id="county-select" aria-label="Focus county"></select>
@@ -92,37 +124,11 @@
     </section>
 
     <section class="crime-main-grid">
-      <article class="panel crime-map-panel">
-        <div class="crime-panel-head">
-          <div>
-            <h2 id="map-title">County map</h2>
-            <p id="map-subtitle" class="brief-sub">Loading statewide map...</p>
-          </div>
-          <div class="crime-map-buttons" aria-label="Map zoom controls">
-            <button type="button" id="zoom-in">Zoom in</button>
-            <button type="button" id="zoom-out">Zoom out</button>
-            <button type="button" id="zoom-reset">Reset</button>
-          </div>
-        </div>
-        <div id="crime-map-shell" class="crime-map-shell">
-          <svg id="crime-map" viewBox="0 0 720 560" role="img" aria-label="New York county crime map"></svg>
-          <div id="crime-map-tooltip" class="crime-map-tooltip" hidden></div>
-        </div>
-        <div class="crime-legend">
-          <div id="crime-legend-track" class="crime-legend-track"></div>
-          <div class="crime-legend-labels">
-            <span id="legend-min">0</span>
-            <span id="legend-mid">0</span>
-            <span id="legend-max">0</span>
-          </div>
-        </div>
-      </article>
-
       <article class="panel crime-detail-panel">
         <div class="crime-panel-head">
           <div>
-            <h2>County detail</h2>
-            <p class="brief-sub">Click the map, use the selector, or keep Albany as the default question.</p>
+            <h2>Focus county</h2>
+            <p class="brief-sub">Defaults begin with Albany County and a side-by-side against Rensselaer County in New York.</p>
           </div>
         </div>
         <div id="county-summary" class="crime-county-summary"></div>
@@ -133,13 +139,14 @@
             <h3>Trend over time</h3>
             <p id="trend-subtitle" class="brief-sub">Loading annual trend...</p>
           </div>
+          <p id="trend-direction" class="crime-trend-direction">Loading trend read...</p>
           <p id="trend-blurb" class="crime-trend-blurb">Loading county trend...</p>
           <div class="crime-trend-shell">
             <svg id="crime-trend-chart" viewBox="0 0 560 260" role="img" aria-label="County crime trend over time"></svg>
           </div>
           <div class="crime-trend-legend">
             <span><i class="trend-swatch trend-county"></i>Selected county</span>
-            <span><i class="trend-swatch trend-median"></i>NY median</span>
+            <span><i class="trend-swatch trend-median"></i>State median</span>
           </div>
         </section>
 
@@ -160,30 +167,30 @@
           </section>
         </div>
       </article>
-    </section>
 
-    <section class="panel crime-compare-panel">
-      <div class="crime-panel-head">
-        <div>
-          <h2>County comparison</h2>
-          <p id="comparison-subtitle" class="brief-sub">Choose two counties to compare how they stack up.</p>
+      <article class="panel crime-compare-panel">
+        <div class="crime-panel-head">
+          <div>
+            <h2>Two-county comparison</h2>
+            <p id="comparison-subtitle" class="brief-sub">Choose two counties to compare how they stack up.</p>
+          </div>
         </div>
-      </div>
-      <div id="comparison-summary" class="crime-compare-summary"></div>
-      <div id="comparison-stat-grid" class="crime-compare-stat-grid"></div>
-      <div class="crime-compare-table-wrap">
-        <table class="crime-table crime-compare-table">
-          <thead>
-            <tr>
-              <th scope="col">Metric</th>
-              <th scope="col" id="comparison-primary-head">County A</th>
-              <th scope="col" id="comparison-secondary-head">County B</th>
-              <th scope="col">Edge</th>
-            </tr>
-          </thead>
-          <tbody id="comparison-table-body"></tbody>
-        </table>
-      </div>
+        <div id="comparison-summary" class="crime-compare-summary"></div>
+        <div id="comparison-stat-grid" class="crime-compare-stat-grid"></div>
+        <div class="crime-compare-table-wrap">
+          <table class="crime-table crime-compare-table">
+            <thead>
+              <tr>
+                <th scope="col">Metric</th>
+                <th scope="col" id="comparison-primary-head">County A</th>
+                <th scope="col" id="comparison-secondary-head">County B</th>
+                <th scope="col">Edge</th>
+              </tr>
+            </thead>
+            <tbody id="comparison-table-body"></tbody>
+          </table>
+        </div>
+      </article>
     </section>
 
     <section class="crime-secondary-grid">
@@ -240,30 +247,13 @@
     <section class="panel crime-sources-panel">
       <div class="crime-panel-head">
         <div>
-          <h2>Data source and design notes</h2>
-          <p class="brief-sub">Built to expand beyond New York later by swapping in new state configs and geography joins.</p>
+          <h2>Method and sources</h2>
+          <p class="brief-sub">Source notes stay down here so the map and county analysis can lead the experience.</p>
         </div>
       </div>
-      <ul class="crime-source-list">
-        <li>
-          County crime rates and population:
-          <a href="https://data.ny.gov/d/34dd-6g2j" target="_blank" rel="noopener noreferrer">NYS Open Data dataset 34dd-6g2j</a>
-        </li>
-        <li>
-          County total offense categories:
-          <a href="https://data.ny.gov/d/ca8h-8gjq" target="_blank" rel="noopener noreferrer">NYS Open Data dataset ca8h-8gjq</a>
-        </li>
-        <li>
-          County boundaries for the map:
-          <a href="https://github.com/topojson/us-atlas" target="_blank" rel="noopener noreferrer">us-atlas TopoJSON, derived from U.S. Census geography</a>
-        </li>
-      </ul>
-      <p class="brief-sub">
-        Notes: overall index crime is the official top-line county metric across reported index offenses. The crime impact score is a site-defined weighted lens, not an official NYS field: murder 25, rape 12, robbery 6, aggravated assault 4, burglary 2, motor vehicle theft 2, larceny 1.
-      </p>
-      <p class="brief-sub">
-        New York City boroughs appear as counties because the official source is county-based. Rates are shown per 100,000 residents. ZIP-level exploration can be added later if a trustworthy, statewide, official source becomes available.
-      </p>
+      <ul id="crime-source-list" class="crime-source-list"></ul>
+      <p id="crime-source-note" class="brief-sub"></p>
+      <p id="crime-coverage-note" class="brief-sub"></p>
     </section>
 
     <p id="crime-status" class="footer-note">Loading latest county crime data...</p>
@@ -271,8 +261,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js" defer></script>
-  <script src="/projects/project-02.js?v=3" defer></script>
+  <script src="/projects/project-02.js?v=6" defer></script>
 </body>
 </html>
-
 
