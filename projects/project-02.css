@@ -471,3 +471,104 @@
   }
 }
 
+
+.crime-trend-card {
+  margin-top: 0.95rem;
+  border: 1px solid var(--crime-line);
+  border-radius: 16px;
+  background: rgb(10 16 29 / 78%);
+  padding: 0.9rem;
+}
+
+.crime-trend-blurb {
+  margin: 0.2rem 0 0.8rem;
+}
+
+.crime-trend-shell {
+  border: 1px solid var(--crime-line);
+  border-radius: 14px;
+  background: rgb(8 14 25 / 92%);
+  overflow: hidden;
+}
+
+#crime-trend-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.crime-trend-grid line,
+.crime-trend-axis line,
+.crime-trend-axis path {
+  stroke: rgb(255 255 255 / 10%);
+}
+
+.crime-trend-axis text {
+  fill: var(--crime-muted);
+  font-size: 11px;
+}
+
+.crime-trend-line {
+  fill: none;
+  stroke-width: 3;
+}
+
+.crime-trend-line.county {
+  stroke: var(--crime-accent);
+}
+
+.crime-trend-line.median {
+  stroke: #78b6ff;
+  stroke-dasharray: 6 6;
+}
+
+.crime-trend-dot.county {
+  fill: var(--crime-accent);
+}
+
+.crime-trend-dot.median {
+  fill: #78b6ff;
+}
+
+.crime-trend-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.crime-trend-label.county {
+  fill: var(--crime-accent);
+}
+
+.crime-trend-label.median {
+  fill: #9bc9ff;
+}
+
+.crime-trend-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+  color: var(--crime-muted);
+  font-size: 0.78rem;
+}
+
+.crime-trend-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.trend-swatch {
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.trend-county {
+  background: var(--crime-accent);
+}
+
+.trend-median {
+  background: #78b6ff;
+}

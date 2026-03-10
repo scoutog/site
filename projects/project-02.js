@@ -5,6 +5,15 @@
     boundaryUrl: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
     ratesApi: "https://data.ny.gov/resource/34dd-6g2j.json",
     categoryApi: "https://data.ny.gov/resource/ca8h-8gjq.json",
+    impactWeights: {
+      murder: 25,
+      rape: 12,
+      robbery: 6,
+      aggravated_assault: 4,
+      burglary: 2,
+      motor_vehicle_theft: 2,
+      larceny: 1
+    },
     countyFipsByName: {
       "Albany": "36001",
       "Allegany": "36003",
@@ -77,10 +86,27 @@
 
   var METRICS = [
     {
+      id: "impact_score",
+      label: "Crime impact score",
+      description: "Custom weighted score per 100,000 residents. Best single answer to how bad crime feels because it blends quantity and severity.",
+      countKey: "index",
+      countLabel: "Index incidents",
+      group: "Recommended lenses"
+    },
+    {
+      id: "index_rate",
+      label: "Overall index crime",
+      description: "Official index crime rate per 100,000 residents across the major index offenses. Good official top line, but it does not weight murder above larceny.",
+      countKey: "index",
+      countLabel: "Index incidents",
+      group: "Recommended lenses"
+    },
+    {
       id: "violent_rate",
       label: "Violent crime",
-      description: "Official violent crime rate per 100,000 residents. A strong default when you do not want larceny to dominate the picture.",
+      description: "Official violent crime rate per 100,000 residents. Useful when you want a serious-crime view without property crimes dominating the picture.",
       countKey: "violent",
+      countLabel: "Violent incidents",
       group: "Recommended lenses"
     },
     {
@@ -88,13 +114,7 @@
       label: "Property crime",
       description: "Official property crime rate per 100,000 residents.",
       countKey: "property",
-      group: "Recommended lenses"
-    },
-    {
-      id: "index_rate",
-      label: "Overall index crime",
-      description: "Official index crime rate per 100,000 residents.",
-      countKey: "index",
+      countLabel: "Property incidents",
       group: "Recommended lenses"
     },
     {
@@ -102,6 +122,7 @@
       label: "Firearm incidents",
       description: "Official firearm-related incident rate per 100,000 residents.",
       countKey: "firearm",
+      countLabel: "Firearm incidents",
       group: "Recommended lenses"
     },
     {
@@ -109,6 +130,7 @@
       label: "Murder",
       description: "Murders per 100,000 residents.",
       countKey: "murder",
+      countLabel: "Murders",
       group: "Violent detail"
     },
     {
@@ -116,6 +138,7 @@
       label: "Rape",
       description: "Rape incidents per 100,000 residents. Source field name is forcible_rape in the official dataset.",
       countKey: "rape",
+      countLabel: "Rape incidents",
       group: "Violent detail"
     },
     {
@@ -123,6 +146,7 @@
       label: "Robbery",
       description: "Robberies per 100,000 residents.",
       countKey: "robbery",
+      countLabel: "Robberies",
       group: "Violent detail"
     },
     {
@@ -130,6 +154,7 @@
       label: "Aggravated assault",
       description: "Aggravated assaults per 100,000 residents.",
       countKey: "aggravated_assault",
+      countLabel: "Aggravated assaults",
       group: "Violent detail"
     },
     {
@@ -137,6 +162,7 @@
       label: "Burglary",
       description: "Burglaries per 100,000 residents.",
       countKey: "burglary",
+      countLabel: "Burglaries",
       group: "Property detail"
     },
     {
@@ -144,6 +170,7 @@
       label: "Larceny",
       description: "Larcenies per 100,000 residents.",
       countKey: "larceny",
+      countLabel: "Larcenies",
       group: "Property detail"
     },
     {
@@ -151,6 +178,7 @@
       label: "Motor vehicle theft",
       description: "Motor vehicle thefts per 100,000 residents.",
       countKey: "motor_vehicle_theft",
+      countLabel: "Motor vehicle thefts",
       group: "Property detail"
     }
   ];
@@ -168,6 +196,7 @@
 
   var els = {
     year: document.getElementById("crime-year"),
+    historyWindow: document.getElementById("crime-history-window"),
     countyCount: document.getElementById("crime-county-count"),
     updated: document.getElementById("crime-updated"),
     status: document.getElementById("crime-status"),
@@ -184,6 +213,9 @@
     legendMax: document.getElementById("legend-max"),
     countySummary: document.getElementById("county-summary"),
     countyStatGrid: document.getElementById("county-stat-grid"),
+    trendSubtitle: document.getElementById("trend-subtitle"),
+    trendBlurb: document.getElementById("trend-blurb"),
+    trendChart: document.getElementById("crime-trend-chart"),
     violentBreakdown: document.getElementById("violent-breakdown"),
     propertyBreakdown: document.getElementById("property-breakdown"),
     insightCards: document.getElementById("insight-cards"),
@@ -197,10 +229,13 @@
 
   var state = {
     latestYear: null,
+    years: [],
     counties: [],
     countiesByName: new Map(),
     countiesByFips: new Map(),
-    selectedMetric: "violent_rate",
+    historyByCounty: new Map(),
+    historyByYear: new Map(),
+    selectedMetric: "index_rate",
     selectedCounty: "Albany",
     metricExtent: null,
     colorScale: null,
@@ -275,40 +310,41 @@
   }
 
   async function loadData() {
-    setStatus("Loading latest county crime data from official New York sources...");
+    setStatus("Loading New York county crime history from official sources...");
 
     try {
-      var yearInfo = await Promise.all([
-        fetchLatestYear(STATE_CONFIG.ratesApi),
-        fetchLatestYear(STATE_CONFIG.categoryApi),
-        fetchJson(STATE_CONFIG.boundaryUrl)
+      var payloads = await Promise.all([
+        fetchJson(STATE_CONFIG.boundaryUrl),
+        fetchJson(buildAllRatesHistoryUrl()),
+        fetchJson(buildAllCategoryHistoryUrl())
       ]);
-      var latestYear = String(Math.min(Number(yearInfo[0]), Number(yearInfo[1])));
-      var boundaries = yearInfo[2];
-      var rows = await Promise.all([
-        fetchJson(buildRatesUrl(latestYear)),
-        fetchJson(buildCategoryUrl(latestYear))
-      ]);
-      var counties = buildCountyRecords(rows[0], rows[1]);
+      var boundaries = payloads[0];
+      var historyRecords = buildHistoryRecords(payloads[1], payloads[2]);
 
-      state.latestYear = latestYear;
-      state.counties = counties;
-      state.countiesByName = new Map(counties.map(function (county) { return [county.county, county]; }));
-      state.countiesByFips = new Map(counties.map(function (county) { return [county.fips, county]; }));
+      state.years = uniqueYears(historyRecords);
+      state.latestYear = state.years[state.years.length - 1];
+      state.historyByCounty = groupBy(historyRecords, "county");
+      state.historyByYear = groupBy(historyRecords, "year");
+      state.counties = historyRecords.filter(function (record) {
+        return record.year === state.latestYear;
+      });
+      state.countiesByName = new Map(state.counties.map(function (county) { return [county.county, county]; }));
+      state.countiesByFips = new Map(state.counties.map(function (county) { return [county.fips, county]; }));
 
       populateCountySelect();
       renderHeroMeta();
       renderMap(boundaries);
       updateView();
-      setStatus("Showing official New York county crime data for " + latestYear + ". Rates are per 100,000 residents.");
+      setStatus("Showing official New York county crime data through " + state.latestYear + ". Trend history begins in " + state.years[0] + ".");
     } catch (error) {
       console.error(error);
-      setError("Could not load live New York county crime data right now. Please try again later.");
+      setError("Could not load live New York county crime history right now. Please try again later.");
     }
   }
 
   function renderHeroMeta() {
     els.year.textContent = state.latestYear;
+    els.historyWindow.textContent = state.years[0] + "-" + state.latestYear;
     els.countyCount.textContent = state.counties.length + " counties";
     els.updated.textContent = "Loaded " + new Date().toLocaleString(undefined, {
       month: "short",
@@ -330,13 +366,13 @@
     els.countySelect.value = state.selectedCounty;
   }
 
-  function buildCountyRecords(rateRows, categoryRows) {
+  function buildHistoryRecords(rateRows, categoryRows) {
     var categoryMap = new Map(categoryRows.map(function (row) {
-      return [row.county, row];
+      return [row.county + "|" + row.year, row];
     }));
 
     return rateRows.map(function (row) {
-      var detail = categoryMap.get(row.county);
+      var detail = categoryMap.get(row.county + "|" + row.year);
       var fips = STATE_CONFIG.countyFipsByName[row.county];
 
       if (!detail || !fips) {
@@ -357,14 +393,17 @@
         larceny: toNumber(detail.larceny),
         motor_vehicle_theft: toNumber(detail.motor_vehicle_theft)
       };
+      var impactScore = ratePer100k(weightedImpactCount(counts), population);
 
       return {
         county: row.county,
         displayName: formatCountyName(row.county),
         fips: fips,
+        year: toNumber(row.year),
         population: population,
         counts: counts,
         metrics: {
+          impact_score: impactScore,
           index_rate: toNumber(row.index_rate),
           violent_rate: toNumber(row.violent_rate),
           property_rate: toNumber(row.property_rate),
@@ -531,28 +570,27 @@
   }
 
   function updateCountyPanel() {
-    var county = state.countiesByName.get(state.selectedCounty) || state.counties[0];
+    var county = selectedCountyRecord();
     var metric = getMetric();
     var sorted = sortedCounties();
     var rank = rankOf(sorted, county.county);
     var value = county.metrics[state.selectedMetric];
     var median = d3.median(sorted, function (item) { return item.metrics[state.selectedMetric]; });
-    var count = county.counts[metric.countKey];
-    var compareText = comparisonText(value, median);
-    var percentile = percentileText(rank, sorted.length);
+    var history = countyHistory(county.county);
+    var lookback = lookbackComparison(history, 5);
 
     els.countySummary.innerHTML = [
       '<p class="crime-eyebrow">Focus county</p>',
       '<h3>' + county.displayName + '</h3>',
       '<p class="crime-summary-copy">' + county.displayName + ' is at <strong>' + formatRate(value) + '</strong> per 100,000 residents for ' + metric.label.toLowerCase() + '.</p>',
-      '<p class="brief-sub">Population ' + integerFormat.format(county.population) + '. ' + compareText + '. ' + percentile + '.</p>'
+      '<p class="brief-sub">Population ' + integerFormat.format(county.population) + '. ' + comparisonText(value, median) + '. ' + metricContext(metric) + '</p>'
     ].join("");
 
     els.countyStatGrid.innerHTML = [
       statCard(metric.label, formatRate(value), "per 100,000 residents"),
       statCard("Statewide rank", ordinal(rank) + " of " + sorted.length, "Higher rank means a higher rate"),
-      statCard("Raw incident count", integerFormat.format(count), "County total in " + state.latestYear),
-      statCard("NY median", formatRate(median), comparisonDelta(value, median))
+      statCard(metric.countLabel, integerFormat.format(county.counts[metric.countKey]), "County total in " + state.latestYear),
+      statCard(lookback.label, lookback.value, lookback.detail)
     ].join("");
 
     renderBreakdown(els.violentBreakdown, county, [
@@ -569,6 +607,77 @@
     ], county.counts.property);
   }
 
+  function updateTrendPanel() {
+    var county = selectedCountyRecord();
+    var metric = getMetric();
+    var history = countyHistory(county.county);
+    var medianSeries = stateMedianSeries();
+
+    els.trendSubtitle.textContent = metric.label + " from " + state.years[0] + " to " + state.latestYear + ".";
+    els.trendBlurb.textContent = trendBlurb(county, history, metric, medianSeries[medianSeries.length - 1]);
+    renderTrendChart(history, medianSeries);
+  }
+
+  function renderTrendChart(history, medianSeries) {
+    var svg = d3.select(els.trendChart);
+    svg.selectAll("*").remove();
+
+    var width = 560;
+    var height = 260;
+    var margin = { top: 16, right: 56, bottom: 34, left: 48 };
+    var values = history.map(function (point) { return point.metrics[state.selectedMetric]; })
+      .concat(medianSeries.map(function (point) { return point.value; }))
+      .filter(Number.isFinite);
+    var yMax = d3.max(values) || 1;
+    var x = d3.scaleLinear().domain([state.years[0], state.latestYear]).range([margin.left, width - margin.right]);
+    var y = d3.scaleLinear().domain([0, yMax * 1.08]).nice().range([height - margin.bottom, margin.top]);
+    var line = d3.line()
+      .defined(function (point) { return Number.isFinite(point.value); })
+      .x(function (point) { return x(point.year); })
+      .y(function (point) { return y(point.value); });
+
+    svg.append("g")
+      .attr("class", "crime-trend-grid")
+      .selectAll("line")
+      .data(y.ticks(4))
+      .join("line")
+      .attr("x1", margin.left)
+      .attr("x2", width - margin.right)
+      .attr("y1", function (tick) { return y(tick); })
+      .attr("y2", function (tick) { return y(tick); });
+
+    var tickYears = state.years.filter(function (year) {
+      return year === state.years[0] || year === state.latestYear || year % 5 === 0;
+    });
+
+    svg.append("g")
+      .attr("class", "crime-trend-axis")
+      .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+      .call(d3.axisBottom(x).tickValues(tickYears).tickFormat(d3.format("d")));
+
+    svg.append("g")
+      .attr("class", "crime-trend-axis")
+      .attr("transform", "translate(" + margin.left + ",0)")
+      .call(d3.axisLeft(y).ticks(4).tickFormat(function (tick) { return formatRate(tick); }));
+
+    svg.append("path")
+      .datum(medianSeries)
+      .attr("class", "crime-trend-line median")
+      .attr("d", line);
+
+    svg.append("path")
+      .datum(history.map(function (point) { return { year: point.year, value: point.metrics[state.selectedMetric] }; }))
+      .attr("class", "crime-trend-line county")
+      .attr("d", line);
+
+    var latestCounty = history[history.length - 1];
+    var latestMedian = medianSeries[medianSeries.length - 1];
+
+    svg.append("circle").attr("class", "crime-trend-dot county").attr("cx", x(latestCounty.year)).attr("cy", y(latestCounty.metrics[state.selectedMetric])).attr("r", 4);
+    svg.append("circle").attr("class", "crime-trend-dot median").attr("cx", x(latestMedian.year)).attr("cy", y(latestMedian.value)).attr("r", 4);
+    svg.append("text").attr("class", "crime-trend-label county").attr("x", x(latestCounty.year) - 6).attr("y", y(latestCounty.metrics[state.selectedMetric]) - 10).attr("text-anchor", "end").text(formatRate(latestCounty.metrics[state.selectedMetric]));
+    svg.append("text").attr("class", "crime-trend-label median").attr("x", x(latestMedian.year) - 6).attr("y", y(latestMedian.value) - 10).attr("text-anchor", "end").text(formatRate(latestMedian.value));
+  }
   function renderBreakdown(container, county, items, total) {
     if (!total) {
       container.innerHTML = '<p class="brief-sub">No incidents reported for this group.</p>';
@@ -592,10 +701,9 @@
     var metric = getMetric();
     var sorted = sortedCounties();
     var highest = sorted[0];
-    var lowest = sorted[sorted.length - 1];
-    var selected = state.countiesByName.get(state.selectedCounty) || state.counties[0];
+    var selected = selectedCountyRecord();
+    var selectedTrend = lookbackComparison(countyHistory(selected.county), 5);
     var albany = state.countiesByName.get("Albany");
-    var median = d3.median(sorted, function (item) { return item.metrics[state.selectedMetric]; });
     var cards = [];
 
     if (albany) {
@@ -607,20 +715,20 @@
     }
 
     cards.push(insightCard(
-      state.selectedCounty === "Albany" ? "Statewide middle" : selected.displayName,
-      state.selectedCounty === "Albany"
-        ? "The statewide median for " + metric.label.toLowerCase() + " is " + formatRate(median) + ", which gives a cleaner baseline than raw counts alone."
-        : selected.displayName + " ranks " + ordinal(rankOf(sorted, selected.county)) + " of " + sorted.length + " on the active metric."
+      selected.displayName + " trend",
+      selectedTrend.narrative + " Latest value: " + formatRate(selected.metrics[state.selectedMetric]) + " per 100,000 residents."
     ));
 
     cards.push(insightCard(
       "Highest rate",
-      highest.displayName + " has the highest " + metric.label.toLowerCase() + " rate in New York at " + formatRate(highest.metrics[state.selectedMetric]) + ", based on " + integerFormat.format(highest.counts[metric.countKey]) + " incidents."
+      highest.displayName + " has the highest " + metric.label.toLowerCase() + " rate in New York at " + formatRate(highest.metrics[state.selectedMetric]) + ", based on " + integerFormat.format(highest.counts[metric.countKey]) + " " + metric.countLabel.toLowerCase() + "."
     ));
 
     cards.push(insightCard(
-      "Lowest rate",
-      lowest.displayName + " has the lowest " + metric.label.toLowerCase() + " rate at " + formatRate(lowest.metrics[state.selectedMetric]) + ". The spread from lowest to highest is " + spreadText(lowest.metrics[state.selectedMetric], highest.metrics[state.selectedMetric]) + "."
+      metric.id === "impact_score" ? "How impact score works" : "Why this metric matters",
+      metric.id === "impact_score"
+        ? "This weighted score counts all official index offenses but leans harder on severe harm: murder 25, rape 12, robbery 6, aggravated assault 4, burglary 2, motor vehicle theft 2, larceny 1."
+        : "Overall index crime is the official top-line benchmark. If you want a single lens that weights severity more heavily, switch to Crime impact score."
     ));
 
     els.insightCards.innerHTML = cards.join("");
@@ -682,7 +790,7 @@
     els.mapTooltip.innerHTML = [
       '<strong>' + county.displayName + '</strong>',
       '<span>' + metric.label + ': ' + formatRate(county.metrics[state.selectedMetric]) + ' per 100k</span>',
-      '<span>Count: ' + integerFormat.format(county.counts[metric.countKey]) + '</span>'
+      '<span>' + metric.countLabel + ': ' + integerFormat.format(county.counts[metric.countKey]) + '</span>'
     ].join("");
 
     var left = event.clientX ? event.clientX - shellBox.left + 14 : 14;
@@ -695,6 +803,22 @@
     els.mapTooltip.hidden = true;
   }
 
+  function selectedCountyRecord() {
+    return state.countiesByName.get(state.selectedCounty) || state.counties[0];
+  }
+
+  function countyHistory(countyName) {
+    return state.historyByCounty.get(countyName) || [];
+  }
+
+  function stateMedianSeries() {
+    return state.years.map(function (year) {
+      var values = (state.historyByYear.get(year) || []).map(function (record) {
+        return record.metrics[state.selectedMetric];
+      }).filter(Number.isFinite);
+      return { year: year, value: d3.median(values) || 0 };
+    });
+  }
   function countyFromFeature(feature) {
     return state.countiesByFips.get(String(feature.id).padStart(5, "0")) || null;
   }
@@ -719,30 +843,111 @@
     return sorted.length;
   }
 
-  function fetchLatestYear(resource) {
-    return fetchJson(buildSocrataUrl(resource, {
-      "$select": "max(year)"
-    })).then(function (rows) {
-      return rows[0] && rows[0].max_year ? rows[0].max_year : "0";
-    });
+  function weightedImpactCount(counts) {
+    return (counts.murder * STATE_CONFIG.impactWeights.murder) +
+      (counts.rape * STATE_CONFIG.impactWeights.rape) +
+      (counts.robbery * STATE_CONFIG.impactWeights.robbery) +
+      (counts.aggravated_assault * STATE_CONFIG.impactWeights.aggravated_assault) +
+      (counts.burglary * STATE_CONFIG.impactWeights.burglary) +
+      (counts.motor_vehicle_theft * STATE_CONFIG.impactWeights.motor_vehicle_theft) +
+      (counts.larceny * STATE_CONFIG.impactWeights.larceny);
   }
 
-  function buildRatesUrl(year) {
+  function metricContext(metric) {
+    if (metric.id === "impact_score") {
+      return "This is a severity-weighted lens rather than an official NYS field.";
+    }
+    if (metric.id === "index_rate") {
+      return "This is the official top-line benchmark across index offenses.";
+    }
+    return "Use the trend chart below to see whether the county is improving or worsening over time.";
+  }
+
+  function lookbackComparison(history, yearsBack) {
+    var latest = history[history.length - 1];
+    var targetYear = latest.year - yearsBack;
+    var baseline = history[0];
+    var index = history.length - 2;
+
+    if (yearsBack > 0) {
+      for (; index >= 0; index -= 1) {
+        if (history[index].year <= targetYear) {
+          baseline = history[index];
+          break;
+        }
+      }
+    }
+
+    var delta = percentChange(latest.metrics[state.selectedMetric], baseline.metrics[state.selectedMetric]);
+    var directionWord = Math.abs(delta) < 4 ? "mostly flat" : (delta < 0 ? "getting better" : "getting worse");
+    var label = baseline.year === latest.year - 5 ? "5-year change" : "Since " + baseline.year;
+
+    return {
+      label: label,
+      value: formatChange(delta),
+      detail: baseline.year === latest.year ? "Current year" : baseline.year + " to " + latest.year,
+      directionWord: directionWord,
+      narrative: baseline.year === latest.year
+        ? "There is not enough history yet to call a trend."
+        : directionWord === "mostly flat"
+          ? "It has been roughly flat since " + baseline.year + "."
+          : "It is " + formatChange(delta).replace("+", "") + (delta > 0 ? " higher" : " lower") + " than it was in " + baseline.year + "."
+    };
+  }
+
+  function trendBlurb(county, history, metric, latestMedianPoint) {
+    var shortTerm = lookbackComparison(history, 5);
+    var longDelta = percentChange(history[history.length - 1].metrics[state.selectedMetric], history[0].metrics[state.selectedMetric]);
+    var latest = history[history.length - 1];
+    var medianText = comparisonText(latest.metrics[state.selectedMetric], latestMedianPoint.value).toLowerCase();
+
+    return county.displayName + " is " + shortTerm.directionWord + " on " + metric.label.toLowerCase() + ": " + shortTerm.narrative + " Long run, it is " + (Math.abs(longDelta) < 4 ? "still near its " + history[0].year + " level" : formatChange(longDelta).replace("+", "") + (longDelta > 0 ? " higher" : " lower") + " than in " + history[0].year) + ". It is currently " + medianText + ".";
+  }
+
+  function groupBy(records, field) {
+    var map = new Map();
+    var index = 0;
+    for (; index < records.length; index += 1) {
+      var record = records[index];
+      if (!map.has(record[field])) {
+        map.set(record[field], []);
+      }
+      map.get(record[field]).push(record);
+    }
+    map.forEach(function (rows) {
+      rows.sort(function (a, b) { return a.year - b.year; });
+    });
+    return map;
+  }
+
+  function uniqueYears(records) {
+    var seen = {};
+    var years = [];
+    var index = 0;
+    for (; index < records.length; index += 1) {
+      if (!seen[records[index].year]) {
+        seen[records[index].year] = true;
+        years.push(records[index].year);
+      }
+    }
+    years.sort(function (a, b) { return a - b; });
+    return years;
+  }
+
+  function buildAllRatesHistoryUrl() {
     return buildSocrataUrl(STATE_CONFIG.ratesApi, {
-      "$select": "county,population,index_count,index_rate,violent_count,violent_rate,property_count,property_rate,firearm_count,firearm_rate",
-      "$where": "year='" + year + "'",
-      "$limit": "100"
+      "$select": "county,year,population,index_count,index_rate,violent_count,violent_rate,property_count,property_rate,firearm_count,firearm_rate",
+      "$limit": "5000"
     });
   }
 
-  function buildCategoryUrl(year) {
+  function buildAllCategoryHistoryUrl() {
     return buildSocrataUrl(STATE_CONFIG.categoryApi, {
-      "$select": "county,total_index_crimes,violent,murder,forcible_rape,robbery,aggravated_assault,property,burglary,larceny,motor_vehicle_theft",
-      "$where": "year='" + year + "' and agency='County Total'",
-      "$limit": "100"
+      "$select": "county,year,total_index_crimes,violent,murder,forcible_rape,robbery,aggravated_assault,property,burglary,larceny,motor_vehicle_theft",
+      "$where": "agency='County Total'",
+      "$limit": "5000"
     });
   }
-
   function buildSocrataUrl(base, params) {
     var url = new URL(base);
     var key;
@@ -764,7 +969,7 @@
   }
 
   function getMetric() {
-    return METRIC_BY_ID[state.selectedMetric] || METRIC_BY_ID.violent_rate;
+    return METRIC_BY_ID[state.selectedMetric] || METRIC_BY_ID.index_rate;
   }
 
   function toNumber(value) {
@@ -871,5 +1076,34 @@
     els.mapSubtitle.textContent = message;
   }
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

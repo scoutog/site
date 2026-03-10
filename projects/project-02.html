@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Project 02: New York Crime Explorer | Scout</title>
   <link rel="stylesheet" href="/styles.css?v=11">
-  <link rel="stylesheet" href="/projects/project-02.css?v=1">
+  <link rel="stylesheet" href="/projects/project-02.css?v=2">
 </head>
 <body>
   <header class="site-header">
@@ -29,15 +29,19 @@
         <span class="kicker">Project 02</span>
         <h1>New York Crime Explorer</h1>
         <p class="lead">
-          A county-level look at crime across New York using live official state data. The default lens
-          starts with violent crime rates so murder and petty theft are not treated as equals, but you can
-          switch into property, firearm, or offense-specific views at any time.
+          A county-level look at crime across New York using live official state data. The default view now starts
+          with official overall index crime, and you can switch to a custom crime impact score when you want a single
+          lens that blends quantity and severity.
         </p>
       </div>
       <div class="crime-hero-meta">
         <div class="crime-hero-stat">
           <span>Latest year</span>
           <strong id="crime-year">Loading...</strong>
+        </div>
+        <div class="crime-hero-stat">
+          <span>Trend window</span>
+          <strong id="crime-history-window">1990-2024</strong>
         </div>
         <div class="crime-hero-stat">
           <span>Geography</span>
@@ -66,7 +70,7 @@
         <div>
           <h2>Choose a lens</h2>
           <p class="brief-sub">
-            Map colors and rankings use rates per 100,000 residents so large counties are comparable to small ones.
+            Rates and scores are normalized per 100,000 residents. Click any county to see its long-run trend and a quick read on whether conditions are getting better or worse.
           </p>
         </div>
         <p id="crime-updated" class="crime-updated">Loading official data...</p>
@@ -119,6 +123,22 @@
         </div>
         <div id="county-summary" class="crime-county-summary"></div>
         <div id="county-stat-grid" class="crime-stat-grid"></div>
+
+        <section class="crime-trend-card">
+          <div class="crime-breakdown-head">
+            <h3>Trend over time</h3>
+            <p id="trend-subtitle" class="brief-sub">Loading annual trend...</p>
+          </div>
+          <p id="trend-blurb" class="crime-trend-blurb">Loading county trend...</p>
+          <div class="crime-trend-shell">
+            <svg id="crime-trend-chart" viewBox="0 0 560 260" role="img" aria-label="County crime trend over time"></svg>
+          </div>
+          <div class="crime-trend-legend">
+            <span><i class="trend-swatch trend-county"></i>Selected county</span>
+            <span><i class="trend-swatch trend-median"></i>NY median</span>
+          </div>
+        </section>
+
         <div class="crime-breakdown-grid">
           <section class="crime-breakdown-card">
             <div class="crime-breakdown-head">
@@ -211,9 +231,10 @@
         </li>
       </ul>
       <p class="brief-sub">
-        Notes: New York City boroughs appear as counties because the official source is county-based.
-        Rates are shown per 100,000 residents. ZIP-level exploration can be added later if a trustworthy,
-        statewide, official source becomes available.
+        Notes: overall index crime is the official top-line county metric across reported index offenses. The crime impact score is a site-defined weighted lens, not an official NYS field: murder 25, rape 12, robbery 6, aggravated assault 4, burglary 2, motor vehicle theft 2, larceny 1.
+      </p>
+      <p class="brief-sub">
+        New York City boroughs appear as counties because the official source is county-based. Rates are shown per 100,000 residents. ZIP-level exploration can be added later if a trustworthy, statewide, official source becomes available.
       </p>
     </section>
 
@@ -222,7 +243,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js" defer></script>
-  <script src="/projects/project-02.js?v=1" defer></script>
+  <script src="/projects/project-02.js?v=2" defer></script>
 </body>
 </html>
-
