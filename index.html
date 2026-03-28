@@ -4,7 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Daily Brief | Scout</title>
-  <link rel="stylesheet" href="/styles.css?v=11">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=12">
 </head>
 <body>
   <header class="site-header">
@@ -181,16 +184,16 @@
       }
 
       function moonImageDataUri(idx) {
-        const base = '<circle cx="40" cy="40" r="22" fill="#1a2740"/>';
+        const base = '<circle cx="40" cy="40" r="22" fill="#1a1a1d"/>';
         let lit = "";
-        if (idx === 1) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="32" cy="40" r="22" fill="#1a2740"/>';
-        else if (idx === 2) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="40" y="18" width="22" height="44" fill="#f4f0d2" clip-path="url(#moonclip)"/>';
-        else if (idx === 3) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="48" cy="40" r="22" fill="#1a2740"/>';
-        else if (idx === 4) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/>';
-        else if (idx === 5) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="32" cy="40" r="22" fill="#1a2740"/>';
-        else if (idx === 6) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="18" y="18" width="22" height="44" fill="#f4f0d2" clip-path="url(#moonclip)"/>';
-        else if (idx === 7) lit = '<circle cx="40" cy="40" r="22" fill="#f4f0d2"/><circle cx="48" cy="40" r="22" fill="#1a2740"/>';
-        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="14" fill="#0c1629"/>' + base + lit + '</svg>';
+        if (idx === 1) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="32" cy="40" r="22" fill="#1a1a1d"/>';
+        else if (idx === 2) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="40" y="18" width="22" height="44" fill="#e4e4e7" clip-path="url(#moonclip)"/>';
+        else if (idx === 3) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="48" cy="40" r="22" fill="#1a1a1d"/>';
+        else if (idx === 4) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/>';
+        else if (idx === 5) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="32" cy="40" r="22" fill="#1a1a1d"/>';
+        else if (idx === 6) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="18" y="18" width="22" height="44" fill="#e4e4e7" clip-path="url(#moonclip)"/>';
+        else if (idx === 7) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="48" cy="40" r="22" fill="#1a1a1d"/>';
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="14" fill="#141416"/>' + base + lit + '</svg>';
         return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       }
 
@@ -212,7 +215,7 @@
         const chartH = height - pad.top - pad.bottom;
 
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "#071223";
+        ctx.fillStyle = "#09090b";
         ctx.fillRect(0, 0, width, height);
 
         const temps = data.map(function (d) { return d.temp; });
@@ -223,7 +226,7 @@
         function yTemp(val) { return pad.top + ((tempMax - val) / tempRange) * chartH; }
         function yPrecip(val) { return pad.top + ((100 - val) / 100) * chartH; }
 
-        ctx.strokeStyle = "#203253";
+        ctx.strokeStyle = "#27272a";
         ctx.lineWidth = 1;
         for (let i = 0; i <= 4; i += 1) {
           const y = pad.top + (chartH * i) / 4;
@@ -233,7 +236,7 @@
         const step = chartW / data.length;
         const barW = Math.max(12, step * 0.66);
 
-        ctx.fillStyle = "#2ca8da";
+        ctx.fillStyle = "#818cf8";
         data.forEach(function (entry, idx) {
           const x = pad.left + idx * step + (step - barW) / 2;
           const y = yTemp(entry.temp);
@@ -242,7 +245,7 @@
           sampledWeather[idx].x = x + barW / 2;
         });
 
-        ctx.strokeStyle = "#facc15";
+        ctx.strokeStyle = "#a78bfa";
         ctx.lineWidth = 2;
         ctx.beginPath();
         data.forEach(function (entry, idx) {
@@ -252,7 +255,7 @@
         });
         ctx.stroke();
 
-        ctx.fillStyle = "#facc15";
+        ctx.fillStyle = "#a78bfa";
         data.forEach(function (entry, idx) {
           const x = sampledWeather[idx].x;
           const y = yPrecip(entry.precip);
@@ -262,34 +265,34 @@
         const maxTemp = Math.max.apply(null, temps);
         const minTemp = Math.min.apply(null, temps);
 
-        ctx.font = "700 20px Space Grotesk, Segoe UI, sans-serif";
+        ctx.font = "600 18px Inter, system-ui, sans-serif";
         ctx.textAlign = "center";
         data.forEach(function (entry, idx) {
           const show = idx % 2 === 0 || entry.temp === maxTemp || entry.temp === minTemp || idx === data.length - 1;
           if (!show) return;
           const x = sampledWeather[idx].x;
           const y = yTemp(entry.temp) - 10;
-          ctx.fillStyle = "#a9bee7";
+          ctx.fillStyle = "#a1a1aa";
           ctx.fillText(Math.round(entry.temp) + "\u00B0", x, y);
         });
 
         data.forEach(function (entry, idx) {
           const x = sampledWeather[idx].x;
-          ctx.font = "24px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Space Grotesk, sans-serif";
-          ctx.fillStyle = "#9db0d6";
+          ctx.font = "24px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Inter, sans-serif";
+          ctx.fillStyle = "#71717a";
           ctx.fillText(weatherCodeToIcon(entry.code), x, height - 30);
-          ctx.font = "700 16px Space Grotesk, Segoe UI, sans-serif";
-          ctx.fillStyle = "#a9bee7";
+          ctx.font = "600 14px Inter, system-ui, sans-serif";
+          ctx.fillStyle = "#a1a1aa";
           ctx.fillText(entry.label, x, height - 13);
         });
 
         ctx.textAlign = "left";
-        ctx.fillStyle = "#9ac8e4";
+        ctx.fillStyle = "#71717a";
         ctx.fillText(tempMax + "F", 4, pad.top + 8);
         ctx.fillText(tempMin + "F", 4, pad.top + chartH);
 
         ctx.textAlign = "right";
-        ctx.fillStyle = "#facc15";
+        ctx.fillStyle = "#a78bfa";
         ctx.fillText("100%", width - 4, pad.top + 8);
         ctx.fillText("0%", width - 4, pad.top + chartH);
       }
@@ -604,7 +607,7 @@
           return x.toFixed(1) + "," + y.toFixed(1);
         }).join(" ");
 
-        const stroke = tone === "up" ? "#6ee7b7" : (tone === "down" ? "#fca5a5" : "#93c5fd");
+        const stroke = tone === "up" ? "#4ade80" : (tone === "down" ? "#f87171" : "#71717a");
         return '<svg class="market-spark" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + coords + '" fill="none" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round"/></svg>';
       }
 

@@ -4,7 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Snake | Scout</title>
-  <link rel="stylesheet" href="/styles.css?v=11">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=12">
   <style>
     .snake-layout {
       display: grid;
@@ -34,11 +37,11 @@
 
     .chip {
       border: 1px solid var(--line);
-      background: #0c1629;
+      background: var(--bg);
       border-radius: 999px;
-      padding: 0.32rem 0.66rem;
+      padding: 0.35rem 0.7rem;
       color: var(--muted);
-      font-size: 0.86rem;
+      font-size: 0.85rem;
     }
 
     .snake-actions {
@@ -49,20 +52,20 @@
 
     button {
       border: 1px solid var(--line);
-      background: linear-gradient(165deg, #12213b, #152846);
+      background: var(--surface-2);
       color: var(--text);
       border-radius: 999px;
-      padding: 0.42rem 0.78rem;
+      padding: 0.45rem 0.8rem;
       font: inherit;
-      font-size: 0.9rem;
-    }
-
-    button {
+      font-size: 0.85rem;
+      font-weight: 500;
       cursor: pointer;
+      transition: border-color 150ms ease, background 150ms ease;
     }
 
     button:hover {
-      border-color: #35527d;
+      background: #27272a;
+      border-color: #3f3f46;
     }
 
     .color-box {
@@ -70,40 +73,46 @@
       align-items: center;
       gap: 0.5rem;
       border: 1px solid var(--line);
-      background: linear-gradient(165deg, #0d1a30, #122543);
+      background: var(--surface-2);
       border-radius: 999px;
-      padding: 0.3rem 0.45rem 0.3rem 0.7rem;
+      padding: 0.3rem 0.5rem 0.3rem 0.75rem;
       min-width: 124px;
       cursor: pointer;
+      transition: border-color 150ms ease;
+    }
+
+    .color-box:hover {
+      border-color: #3f3f46;
     }
 
     .color-box span {
       color: var(--muted);
-      font-size: 0.84rem;
-      letter-spacing: 0.02em;
+      font-size: 0.82rem;
+      font-weight: 500;
     }
+
     .color-picker {
-      border: 1px solid #27436f;
+      border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 0.26rem 0.65rem;
+      padding: 0.28rem 0.65rem;
       min-width: 78px;
-      background: #13233d;
+      background: var(--bg);
       color: #ffffff;
       font: inherit;
-      font-size: 0.83rem;
+      font-size: 0.82rem;
       cursor: pointer;
     }
 
     .color-picker option {
-      color: #0b1020;
+      color: #09090b;
     }
 
 
 .snake-board-wrap {
       border: 1px solid var(--line);
-      border-radius: 16px;
-      background: #091223;
-      padding: 0.7rem;
+      border-radius: var(--radius-lg);
+      background: var(--bg);
+      padding: 0.75rem;
       display: grid;
       place-items: center;
     }
@@ -112,9 +121,9 @@
       display: block;
       width: min(100%, 480px);
       height: auto;
-      border: 1px solid #21395f;
-      border-radius: 10px;
-      background: #050a14;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #050507;
       image-rendering: pixelated;
     }
 
@@ -296,13 +305,13 @@
         const g = parseInt(raw.slice(2, 4), 16);
         const b = parseInt(raw.slice(4, 6), 16);
         const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-        selectEl.style.background = "#13233d";
+        selectEl.style.background = "#09090b";
         selectEl.style.color = "#ffffff";
-        selectEl.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
+        selectEl.style.borderColor = luminance > 0.55 ? "#3f3f46" : "#52525b";
         const wrapper = selectEl.closest(".color-box");
         if (wrapper) {
-          wrapper.style.borderColor = luminance > 0.55 ? "#35527d" : "#5b7db0";
-          wrapper.style.background = "linear-gradient(165deg, " + shade(hex, -140) + ", " + shade(hex, -108) + ")";
+          wrapper.style.borderColor = luminance > 0.55 ? "#3f3f46" : "#52525b";
+          wrapper.style.background = shade(hex, -140);
         }
       }
       function resetGame() {
@@ -328,10 +337,10 @@
       }
 
       function drawGrid() {
-        ctx.fillStyle = "#050a14";
+        ctx.fillStyle = "#050507";
         ctx.fillRect(0, 0, board.width, board.height);
 
-        ctx.strokeStyle = "#0f1b31";
+        ctx.strokeStyle = "#1a1a1d";
         ctx.lineWidth = 1;
         for (let i = 0; i <= tiles; i += 1) {
           const pos = i * tileSize;
