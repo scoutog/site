@@ -7,8 +7,10 @@ Static website hosted on GitHub Pages.
 
 ## Current Pages
 - `index.html` - Daily Brief landing page
-- `projects/snake.html` - Playable Snake game
-- `projects/project-02.html` to `projects/project-06.html` - Placeholder project pages
+- `portfolio.html` - Portfolio landing page draft
+- `snake.html` - Playable Snake game
+- `projects/project-02.html` - County Crime Atlas
+- `projects/project-04.html` and `projects/project-06.html` - Placeholder project pages
 - `styles.css` - Shared site styling
 - `CNAME` - Custom domain configuration (`scout-og.com`)
 
