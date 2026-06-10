@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=14">
+  <link rel="stylesheet" href="/styles.css?v=23">
 </head>
 <body>
   <header class="site-header">
@@ -18,7 +18,6 @@
         <a href="/portfolio.html">Portfolio</a>
         <a href="/snake.html">Snake</a>
         <a href="/projects/project-02.html">Crime</a>
-        <a href="/projects/project-04.html">Placeholders</a>
       </nav>
     </div>
   </header>
@@ -31,22 +30,29 @@
         <p id="last-updated" class="brief-updated">Loading latest updates...</p>
       </div>
 
-      <div class="morning-context">
-        <div class="brief-moon-row">
-          <img id="moon-image" alt="Moon phase" class="moon-image">
-          <p id="moon-label" class="brief-sub"></p>
+      <form id="zip-form" class="zip-form is-collapsed" autocomplete="on">
+        <button id="location-toggle" class="location-badge" type="button" aria-expanded="false" aria-controls="zip-controls">
+          <span id="brief-location" class="brief-location">Albany, NY</span>
+          <span id="location-zip" class="location-zip">12210</span>
+        </button>
+        <div id="zip-controls" class="zip-controls">
+          <input id="zip-input" name="zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="12210" value="12210">
+          <button type="submit">Update</button>
         </div>
+      </form>
 
-        <form id="zip-form" class="zip-form" autocomplete="on">
-          <div class="zip-head">
-            <label for="zip-input">Location</label>
-            <p id="brief-location" class="brief-location brief-location-right">Albany, NY</p>
+      <div class="morning-context">
+        <div class="morning-top-row">
+          <article class="brief-top-word">
+            <h2>Word of the Day</h2>
+            <p id="word-of-day">Loading word...</p>
+          </article>
+
+          <div class="brief-moon-row" aria-label="Moon phase">
+            <div id="moon-strip" class="moon-strip"></div>
+            <p id="moon-label" class="brief-sub"></p>
           </div>
-          <div class="zip-controls">
-            <input id="zip-input" name="zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="12210" value="12210">
-            <button type="submit">Update</button>
-          </div>
-        </form>
+        </div>
       </div>
     </section>
 
@@ -82,8 +88,19 @@
         </article>
 
         <article class="brief-section market-side">
-          <h2>Market Snapshot (1D)</h2>
-          <p class="brief-sub">SPY, VOO, QQQM, NKE</p>
+          <div class="market-head">
+            <div>
+              <h2>Market Snapshot (1D)</h2>
+              <p id="market-symbols-label" class="brief-sub">VOO, QQQM, NKE</p>
+            </div>
+            <form id="market-form" class="market-form" autocomplete="off">
+              <div id="market-tickers" class="market-tickers" aria-label="Followed tickers"></div>
+              <div class="market-add">
+                <input id="market-input" name="ticker" spellcheck="false" placeholder="Ticker" aria-label="Add ticker">
+                <button type="submit">Add</button>
+              </div>
+            </form>
+          </div>
           <div id="market-list" class="market-list">
             <p class="brief-sub">Loading market snapshot...</p>
           </div>
@@ -91,11 +108,6 @@
       </section>
 
       <section class="brief-almanac" aria-label="Almanac">
-        <article class="brief-section word-side">
-          <h2>Word of the Day</h2>
-          <p id="word-of-day">Loading word...</p>
-        </article>
-
         <article class="brief-section onthisday-bottom">
           <h2>On This Day</h2>
           <p id="on-this-day">Loading fact...</p>
@@ -117,13 +129,15 @@
       const dateEl = document.getElementById("today-date");
       const updatedEl = document.getElementById("last-updated");
       const locationEl = document.getElementById("brief-location");
-      const moonImgEl = document.getElementById("moon-image");
+      const moonStripEl = document.getElementById("moon-strip");
       const moonLabelEl = document.getElementById("moon-label");
       const weatherSummaryEl = document.getElementById("weather-summary");
       const hourlyChart = document.getElementById("hourly-chart");
       const weatherTooltip = document.getElementById("weather-tooltip");
       const zipForm = document.getElementById("zip-form");
       const zipInput = document.getElementById("zip-input");
+      const locationToggle = document.getElementById("location-toggle");
+      const locationZipEl = document.getElementById("location-zip");
       const newsGridEl = document.getElementById("news-grid");
       const sportsListEl = document.getElementById("sports-list");
       const onThisDayEl = document.getElementById("on-this-day");
@@ -132,9 +146,15 @@
       const comicLinkEl = document.getElementById("comic-link");
       const comicImageEl = document.getElementById("comic-image");
       const marketListEl = document.getElementById("market-list");
+      const marketSymbolsLabelEl = document.getElementById("market-symbols-label");
+      const marketForm = document.getElementById("market-form");
+      const marketInput = document.getElementById("market-input");
+      const marketTickersEl = document.getElementById("market-tickers");
 
       const now = new Date();
       const sampledWeather = [];
+      const defaultMarketSymbols = ["VOO", "QQQM", "NKE"];
+      const marketSymbolsKey = "scout_daily_market_symbols";
 
       dateEl.textContent = now.toLocaleDateString(undefined, {
         weekday: "long",
@@ -185,27 +205,40 @@
         const phase = age / synodicMonth;
         const labels = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
         const idx = Math.round(phase * 8) % 8;
-        return { label: labels[idx], idx: idx };
+        return { label: labels[idx], idx: idx, age: age, synodicMonth: synodicMonth };
       }
 
-      function moonImageDataUri(idx) {
-        const base = '<circle cx="40" cy="40" r="22" fill="#1a1a1d"/>';
+      function moonPhaseSvg(idx) {
+        const clipId = "moonclip-" + idx;
+        const base = '<circle cx="24" cy="24" r="15" fill="#1a1a1d"/>';
         let lit = "";
-        if (idx === 1) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="32" cy="40" r="22" fill="#1a1a1d"/>';
-        else if (idx === 2) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="40" y="18" width="22" height="44" fill="#e4e4e7" clip-path="url(#moonclip)"/>';
-        else if (idx === 3) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="48" cy="40" r="22" fill="#1a1a1d"/>';
-        else if (idx === 4) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/>';
-        else if (idx === 5) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="32" cy="40" r="22" fill="#1a1a1d"/>';
-        else if (idx === 6) lit = '<clipPath id="moonclip"><circle cx="40" cy="40" r="22"/></clipPath><rect x="18" y="18" width="22" height="44" fill="#e4e4e7" clip-path="url(#moonclip)"/>';
-        else if (idx === 7) lit = '<circle cx="40" cy="40" r="22" fill="#e4e4e7"/><circle cx="48" cy="40" r="22" fill="#1a1a1d"/>';
-        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="14" fill="#141416"/>' + base + lit + '</svg>';
-        return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+        if (idx === 1) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="18" cy="24" r="15" fill="#1a1a1d"/>';
+        else if (idx === 2) lit = '<clipPath id="' + clipId + '"><circle cx="24" cy="24" r="15"/></clipPath><rect x="24" y="9" width="15" height="30" fill="#e4e4e7" clip-path="url(#' + clipId + ')"/>';
+        else if (idx === 3) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="30" cy="24" r="15" fill="#1a1a1d"/>';
+        else if (idx === 4) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/>';
+        else if (idx === 5) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="18" cy="24" r="15" fill="#1a1a1d"/>';
+        else if (idx === 6) lit = '<clipPath id="' + clipId + '"><circle cx="24" cy="24" r="15"/></clipPath><rect x="9" y="9" width="15" height="30" fill="#e4e4e7" clip-path="url(#' + clipId + ')"/>';
+        else if (idx === 7) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="30" cy="24" r="15" fill="#1a1a1d"/>';
+        return '<svg class="moon-icon" viewBox="0 0 48 48" role="img" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#141416"/>' + base + lit + '</svg>';
+      }
+
+      function nextFullMoonDate(moon, date) {
+        const fullMoonAge = moon.synodicMonth / 2;
+        const daysUntil = ((fullMoonAge - moon.age) + moon.synodicMonth) % moon.synodicMonth || moon.synodicMonth;
+        return new Date(date.getTime() + daysUntil * 86400000);
       }
 
       function renderMoon() {
         const moon = moonData(now);
-        moonImgEl.src = moonImageDataUri(moon.idx);
-        moonLabelEl.textContent = moon.label;
+        const labels = ["New", "Waxing", "First", "Gibbous", "Full", "Waning", "Last", "Crescent"];
+        const nextFullMoon = nextFullMoonDate(moon, now);
+        moonStripEl.innerHTML = labels.map(function (label, idx) {
+          const active = idx === moon.idx ? " is-active" : "";
+          const dateText = idx === 4 ? '<span class="moon-date">' + nextFullMoon.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + '</span>' : "";
+          const aria = idx === moon.idx ? ' aria-current="true"' : "";
+          return '<div class="moon-phase' + active + '"' + aria + ' title="' + label + '">' + moonPhaseSvg(idx) + '<span>' + label + '</span>' + dateText + '</div>';
+        }).join("");
+        moonLabelEl.textContent = moon.label + " now. Next full moon: " + nextFullMoon.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + ".";
       }
 
       function drawWeatherChart(data) {
@@ -250,8 +283,11 @@
           sampledWeather[idx].x = x + barW / 2;
         });
 
-        ctx.strokeStyle = "#a78bfa";
-        ctx.lineWidth = 2;
+        const precipColor = "#38bdf8";
+        ctx.strokeStyle = precipColor;
+        ctx.lineWidth = 3;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
         ctx.beginPath();
         data.forEach(function (entry, idx) {
           const x = sampledWeather[idx].x;
@@ -260,11 +296,11 @@
         });
         ctx.stroke();
 
-        ctx.fillStyle = "#a78bfa";
+        ctx.fillStyle = precipColor;
         data.forEach(function (entry, idx) {
           const x = sampledWeather[idx].x;
           const y = yPrecip(entry.precip);
-          ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x, y, 3.4, 0, Math.PI * 2); ctx.fill();
         });
 
         const maxTemp = Math.max.apply(null, temps);
@@ -297,7 +333,7 @@
         ctx.fillText(tempMin + "F", 4, pad.top + chartH);
 
         ctx.textAlign = "right";
-        ctx.fillStyle = "#a78bfa";
+        ctx.fillStyle = precipColor;
         ctx.fillText("100%", width - 4, pad.top + 8);
         ctx.fillText("0%", width - 4, pad.top + chartH);
       }
@@ -369,7 +405,7 @@
 
       async function loadWeatherFromZip(zip) {
         const trimmed = zip.trim();
-        if (!/^\d{5}$/.test(trimmed)) { weatherSummaryEl.textContent = "Enter a valid 5-digit ZIP code."; return; }
+        if (!/^\d{5}$/.test(trimmed)) { weatherSummaryEl.textContent = "Enter a valid 5-digit ZIP code."; return false; }
 
         try {
           const zipRes = await fetch("https://api.zippopotam.us/us/" + encodeURIComponent(trimmed));
@@ -382,8 +418,21 @@
           const lon = Number(place.longitude);
           const label = safeText(place["place name"], "Unknown City") + ", " + safeText(place["state abbreviation"], "");
           await weatherByCoords(lat, lon, label);
+          locationZipEl.textContent = trimmed;
+          zipInput.value = trimmed;
+          return true;
         } catch (_) {
           weatherSummaryEl.textContent = "Could not load weather for that ZIP.";
+          return false;
+        }
+      }
+
+      function setLocationFormExpanded(expanded) {
+        zipForm.classList.toggle("is-collapsed", !expanded);
+        locationToggle.setAttribute("aria-expanded", String(expanded));
+        if (expanded) {
+          zipInput.focus();
+          zipInput.select();
         }
       }
 
@@ -676,12 +725,57 @@
         });
       }
 
-      async function loadMarkets() {
-        const symbols = ["SPY", "VOO", "QQQM", "NKE"];
+      function normalizeMarketSymbols(rawSymbols) {
+        const seen = new Set();
+        const normalized = [];
+        rawSymbols.forEach(function (symbol) {
+          const clean = String(symbol || "").trim().toUpperCase().replace(/[^A-Z0-9.-]/g, "");
+          if (!clean || seen.has(clean)) {
+            return;
+          }
+          seen.add(clean);
+          normalized.push(clean);
+        });
+        return normalized.slice(0, 8);
+      }
+
+      function getMarketSymbols() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(marketSymbolsKey) || "null");
+          const symbols = Array.isArray(saved) ? normalizeMarketSymbols(saved) : [];
+          return symbols.length ? symbols : defaultMarketSymbols.slice();
+        } catch (_) {
+          return defaultMarketSymbols.slice();
+        }
+      }
+
+      function saveMarketSymbols(symbols) {
+        localStorage.setItem(marketSymbolsKey, JSON.stringify(symbols));
+      }
+
+      function renderMarketTickerControls(symbols) {
+        marketSymbolsLabelEl.textContent = symbols.join(", ");
+        marketTickersEl.innerHTML = symbols.map(function (symbol) {
+          return '<button class="market-chip" type="button" data-symbol="' + symbol + '" aria-label="Remove ' + symbol + '">' + symbol + '<span aria-hidden="true">x</span></button>';
+        }).join("");
+      }
+
+      function setMarketSymbols(symbols) {
+        const normalized = normalizeMarketSymbols(symbols);
+        const nextSymbols = normalized.length ? normalized : defaultMarketSymbols.slice();
+        saveMarketSymbols(nextSymbols);
+        renderMarketTickerControls(nextSymbols);
+        loadMarkets(nextSymbols);
+      }
+
+      async function loadMarkets(symbols) {
+        const activeSymbols = normalizeMarketSymbols(symbols || getMarketSymbols());
+        renderMarketTickerControls(activeSymbols);
+        marketListEl.innerHTML = '<p class="brief-sub">Loading market snapshot...</p>';
 
         try {
-          const payloads = await Promise.all(symbols.map(function (s) { return fetchYahooChart(s); }));
-          const rows = payloads.map(function (payload, i) { return parseYahooQuote(symbols[i], payload); }).filter(Boolean);
+          const payloads = await Promise.all(activeSymbols.map(function (s) { return fetchYahooChart(s); }));
+          const rows = payloads.map(function (payload, i) { return parseYahooQuote(activeSymbols[i], payload); }).filter(Boolean);
           if (!rows.length) throw new Error("empty market rows");
           renderMarkets(rows);
         } catch (_) {
@@ -707,7 +801,38 @@
 
       zipForm.addEventListener("submit", function (event) {
         event.preventDefault();
-        loadWeatherFromZip(zipInput.value);
+        loadWeatherFromZip(zipInput.value).then(function (loaded) {
+          if (loaded) {
+            setLocationFormExpanded(false);
+          }
+        });
+      });
+
+      locationToggle.addEventListener("click", function () {
+        setLocationFormExpanded(zipForm.classList.contains("is-collapsed"));
+      });
+
+      zipInput.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          setLocationFormExpanded(false);
+        }
+      });
+
+      marketForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const symbol = marketInput.value;
+        const nextSymbols = getMarketSymbols().concat(symbol);
+        marketInput.value = "";
+        setMarketSymbols(nextSymbols);
+      });
+
+      marketTickersEl.addEventListener("click", function (event) {
+        const button = event.target.closest(".market-chip");
+        if (!button) {
+          return;
+        }
+        const symbol = button.getAttribute("data-symbol");
+        setMarketSymbols(getMarketSymbols().filter(function (item) { return item !== symbol; }));
       });
 
       bindWeatherTooltip();
@@ -723,7 +848,3 @@
   </script>
 </body>
 </html>
-
-
-
-

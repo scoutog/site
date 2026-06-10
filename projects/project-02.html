@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=12">
-  <link rel="stylesheet" href="/projects/project-02.css?v=7">
+  <link rel="stylesheet" href="/styles.css?v=14">
+  <link rel="stylesheet" href="/projects/project-02.css?v=8">
 </head>
 <body>
   <header class="site-header">
@@ -19,19 +19,18 @@
         <a href="/portfolio.html">Portfolio</a>
         <a href="/snake.html">Snake</a>
         <a class="active" href="/projects/project-02.html">Crime</a>
-        <a href="/projects/project-04.html">Placeholders</a>
       </nav>
     </div>
   </header>
 
   <main class="page crime-page">
-    <section class="panel crime-map-stage">
+    <section class="crime-hero" aria-labelledby="crime-title">
       <div class="crime-stage-head">
         <div>
           <span class="kicker">Crime Atlas</span>
           <h1 id="crime-title">County Crime Atlas</h1>
           <p class="lead crime-stage-lead">
-            Start with the heatmap. Drag to pan, scroll to zoom, and switch between crime lenses to see how counties stack up.
+            A county-level map and drilldown for understanding how crime changes by place, category, and year.
           </p>
         </div>
         <div class="crime-map-buttons" aria-label="Map zoom controls">
@@ -40,70 +39,80 @@
           <button type="button" id="zoom-reset">Reset</button>
         </div>
       </div>
-
-      <div class="crime-control-grid crime-stage-controls">
-        <label class="crime-control">
-          <span>State</span>
-          <select id="state-select" aria-label="State"></select>
-        </label>
-        <label class="crime-control">
-          <span>Crime category</span>
-          <select id="metric-select" aria-label="Crime category"></select>
-        </label>
-      </div>
-
-      <div class="crime-map-panel">
-        <div class="crime-panel-head">
-          <div>
-            <h2 id="map-title">County heatmap</h2>
-            <p id="map-subtitle" class="brief-sub">Loading county map...</p>
-          </div>
-        </div>
-        <div id="crime-map-shell" class="crime-map-shell">
-          <svg id="crime-map" viewBox="0 0 720 560" role="img" aria-label="County crime map"></svg>
-          <div id="crime-map-tooltip" class="crime-map-tooltip" hidden></div>
-        </div>
-        <div class="crime-legend">
-          <div id="crime-legend-track" class="crime-legend-track"></div>
-          <div class="crime-legend-labels">
-            <span id="legend-min">0</span>
-            <span id="legend-mid">0</span>
-            <span id="legend-max">0</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="crime-stage-footer">
-        <div class="crime-hero-meta crime-stage-meta">
-          <div class="crime-hero-stat">
-            <span>Latest year</span>
-            <strong id="crime-year">Loading...</strong>
-          </div>
-          <div class="crime-hero-stat">
-            <span>Trend window</span>
-            <strong id="crime-history-window">Loading...</strong>
-          </div>
-          <div class="crime-hero-stat">
-            <span>Geography</span>
-            <strong>County</strong>
-          </div>
-          <div class="crime-hero-stat">
-            <span>Coverage</span>
-            <strong id="crime-county-count">Loading...</strong>
-          </div>
-          <div class="crime-hero-stat">
-            <span>Source</span>
-            <strong id="crime-source-name">Loading...</strong>
-          </div>
-        </div>
-        <div class="crime-stage-meta-copy">
-          <p id="crime-hero-note-copy" class="brief-sub crime-stage-note">Loading county coverage notes...</p>
-          <p id="crime-updated" class="crime-updated">Loading official data...</p>
-        </div>
-      </div>
     </section>
 
-    <section class="panel crime-drilldown-toolbar">
+    <div class="crime-stack">
+      <section class="crime-section crime-map-stage">
+        <div class="crime-panel-head">
+          <div>
+            <h2>County heatmap</h2>
+            <p class="brief-sub">Drag to pan, scroll to zoom, and switch lenses to see how counties stack up.</p>
+          </div>
+        </div>
+
+        <div class="crime-control-grid crime-stage-controls">
+          <label class="crime-control">
+            <span>State</span>
+            <select id="state-select" aria-label="State"></select>
+          </label>
+          <label class="crime-control">
+            <span>Crime category</span>
+            <select id="metric-select" aria-label="Crime category"></select>
+          </label>
+        </div>
+
+        <div class="crime-map-panel">
+          <div class="crime-panel-head crime-map-title-row">
+            <div>
+              <h3 id="map-title">County heatmap</h3>
+              <p id="map-subtitle" class="brief-sub">Loading county map...</p>
+            </div>
+          </div>
+          <div id="crime-map-shell" class="crime-map-shell">
+            <svg id="crime-map" viewBox="0 0 720 560" role="img" aria-label="County crime map"></svg>
+            <div id="crime-map-tooltip" class="crime-map-tooltip" hidden></div>
+          </div>
+          <div class="crime-legend">
+            <div id="crime-legend-track" class="crime-legend-track"></div>
+            <div class="crime-legend-labels">
+              <span id="legend-min">0</span>
+              <span id="legend-mid">0</span>
+              <span id="legend-max">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="crime-stage-footer">
+          <div class="crime-hero-meta crime-stage-meta">
+            <div class="crime-hero-stat">
+              <span>Latest year</span>
+              <strong id="crime-year">Loading...</strong>
+            </div>
+            <div class="crime-hero-stat">
+              <span>Trend window</span>
+              <strong id="crime-history-window">Loading...</strong>
+            </div>
+            <div class="crime-hero-stat">
+              <span>Geography</span>
+              <strong>County</strong>
+            </div>
+            <div class="crime-hero-stat">
+              <span>Coverage</span>
+              <strong id="crime-county-count">Loading...</strong>
+            </div>
+            <div class="crime-hero-stat">
+              <span>Source</span>
+              <strong id="crime-source-name">Loading...</strong>
+            </div>
+          </div>
+          <div class="crime-stage-meta-copy">
+            <p id="crime-hero-note-copy" class="brief-sub crime-stage-note">Loading county coverage notes...</p>
+            <p id="crime-updated" class="crime-updated">Loading official data...</p>
+          </div>
+        </div>
+      </section>
+
+    <section class="crime-section crime-drilldown-toolbar">
       <div class="crime-panel-head">
         <div>
           <h2>County drilldown</h2>
@@ -125,7 +134,7 @@
     </section>
 
     <section class="crime-main-grid">
-      <article class="panel crime-detail-panel">
+      <article class="crime-section crime-detail-panel">
         <div class="crime-panel-head">
           <div>
             <h2>Focus county</h2>
@@ -169,7 +178,7 @@
         </div>
       </article>
 
-      <article class="panel crime-compare-panel">
+      <article class="crime-section crime-compare-panel">
         <div class="crime-panel-head">
           <div>
             <h2>Two-county comparison</h2>
@@ -195,7 +204,7 @@
     </section>
 
     <section class="crime-secondary-grid">
-      <article class="panel crime-insights-panel">
+      <article class="crime-section crime-insights-panel">
         <div class="crime-panel-head">
           <div>
             <h2>Preset insights</h2>
@@ -205,7 +214,7 @@
         <div id="insight-cards" class="crime-insight-cards"></div>
       </article>
 
-      <article class="panel crime-rankings-panel">
+      <article class="crime-section crime-rankings-panel">
         <div class="crime-panel-head">
           <div>
             <h2>Top 5 and bottom 5 counties</h2>
@@ -245,7 +254,7 @@
       </article>
     </section>
 
-    <section class="panel crime-sources-panel">
+    <section class="crime-section crime-sources-panel">
       <div class="crime-panel-head">
         <div>
           <h2>Method and sources</h2>
@@ -257,11 +266,12 @@
       <p id="crime-coverage-note" class="brief-sub"></p>
     </section>
 
-    <p id="crime-status" class="footer-note">Loading latest county crime data...</p>
+      <p id="crime-status" class="footer-note">Loading latest county crime data...</p>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js" defer></script>
-  <script src="/projects/project-02.js?v=6" defer></script>
+  <script src="/projects/project-02.js?v=8" defer></script>
 </body>
 </html>

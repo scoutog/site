@@ -1156,6 +1156,16 @@
   }
 
   function lookbackComparison(history, yearsBack) {
+    if (!history.length) {
+      return {
+        label: "Trend",
+        value: "Unavailable",
+        detail: "No history",
+        directionWord: "mostly flat",
+        narrative: "There is not enough history yet to call a trend."
+      };
+    }
+
     var latest = history[history.length - 1];
     var targetYear = latest.year - yearsBack;
     var baseline = history[0];
@@ -1183,17 +1193,21 @@
         ? "There is not enough history yet to call a trend."
         : directionWord === "mostly flat"
           ? "It has been roughly flat since " + baseline.year + "."
-          : "It is " + formatChange(delta).replace("+", "") + (delta > 0 ? " higher" : " lower") + " than it was in " + baseline.year + "."
+          : "It is " + formatChangeMagnitude(delta) + (delta > 0 ? " higher" : " lower") + " than it was in " + baseline.year + "."
     };
   }
 
   function trendBlurb(county, history, metric, latestMedianPoint) {
+    if (!history.length) {
+      return "There is not enough history yet to summarize " + county.displayName + ".";
+    }
+
     var shortTerm = lookbackComparison(history, 5);
     var longDelta = percentChange(history[history.length - 1].metrics[state.selectedMetric], history[0].metrics[state.selectedMetric]);
     var latest = history[history.length - 1];
     var medianText = comparisonText(latest.metrics[state.selectedMetric], latestMedianPoint.value).toLowerCase();
 
-    return county.displayName + " is " + shortTerm.directionWord + " on " + metric.label.toLowerCase() + ": " + shortTerm.narrative + " Long run, it is " + (Math.abs(longDelta) < 4 ? "still near its " + history[0].year + " level" : formatChange(longDelta).replace("+", "") + (longDelta > 0 ? " higher" : " lower") + " than in " + history[0].year) + ". It is currently " + medianText + ".";
+    return county.displayName + " is " + shortTerm.directionWord + " on " + metric.label.toLowerCase() + ": " + shortTerm.narrative + " Long run, it is " + (Math.abs(longDelta) < 4 ? "still near its " + history[0].year + " level" : formatChangeMagnitude(longDelta) + (longDelta > 0 ? " higher" : " lower") + " than in " + history[0].year) + ". It is currently " + medianText + ".";
   }
 
   function groupBy(records, field) {
@@ -1286,6 +1300,30 @@
       return "0";
     }
     return Math.abs(value - Math.round(value)) < 0.05 ? integerFormat.format(Math.round(value)) : decimalFormat.format(value);
+  }
+
+  function formatChange(value) {
+    if (!Number.isFinite(value)) {
+      return "Flat";
+    }
+    if (Math.abs(value) < 0.5) {
+      return "Flat";
+    }
+    return (value > 0 ? "+" : "") + integerFormat.format(Math.round(value)) + "%";
+  }
+
+  function formatChangeMagnitude(value) {
+    if (!Number.isFinite(value)) {
+      return "0%";
+    }
+    return integerFormat.format(Math.abs(Math.round(value))) + "%";
+  }
+
+  function percentChange(current, baseline) {
+    if (!Number.isFinite(current) || !Number.isFinite(baseline) || baseline === 0) {
+      return 0;
+    }
+    return ((current - baseline) / baseline) * 100;
   }
 
   function comparisonText(value, median) {
@@ -1445,7 +1483,3 @@
     els.mapSubtitle.textContent = message;
   }
 })();
-
-
-
-
