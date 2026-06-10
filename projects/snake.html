@@ -7,50 +7,77 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=12">
+  <link rel="stylesheet" href="/styles.css?v=14">
   <style>
+    .snake-page {
+      width: min(1040px, calc(100% - 2.5rem));
+      padding-top: clamp(2rem, 5vw, 4.5rem);
+    }
+
     .snake-layout {
+      display: grid;
+      gap: clamp(1.5rem, 4vw, 3rem);
+    }
+
+    .snake-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: clamp(1rem, 4vw, 3rem);
+      align-items: end;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: clamp(1.25rem, 3vw, 2.2rem);
+    }
+
+    .snake-hero-copy {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .snake-headline {
+      font-size: clamp(2.2rem, 6vw, 4.2rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .snake-hero .lead {
+      max-width: 48ch;
+      margin-top: 0;
+    }
+
+    .snake-topbar {
       display: grid;
       gap: 1rem;
     }
 
-    .snake-headline {
-      margin-bottom: 0.4rem;
-    }
-
-    .snake-topbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.8rem;
-    }
-
     .snake-metrics,
     .snake-pickers {
-      display: flex;
-      gap: 0.55rem;
-      flex-wrap: wrap;
-      align-items: center;
+      display: grid;
+      gap: 0.65rem;
     }
 
     .chip {
-      border: 1px solid var(--line);
-      background: var(--bg);
-      border-radius: 999px;
-      padding: 0.35rem 0.7rem;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      border-top: 1px solid var(--line);
+      padding: 0.7rem 0 0;
       color: var(--muted);
       font-size: 0.85rem;
     }
 
-    .snake-actions {
-      display: flex;
-      gap: 0.45rem;
-      flex-wrap: wrap;
+    .chip strong {
+      color: var(--text);
+      font-size: 1rem;
     }
 
-    button {
+    .snake-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .snake-page button {
       border: 1px solid var(--line);
       background: var(--surface-2);
       color: var(--text);
@@ -63,21 +90,39 @@
       transition: border-color 150ms ease, background 150ms ease;
     }
 
-    button:hover {
+    .snake-page button:hover {
       background: #27272a;
       border-color: #3f3f46;
     }
 
+    .snake-game {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(230px, 280px);
+      gap: clamp(1rem, 3vw, 2rem);
+      align-items: start;
+    }
+
+    .snake-side {
+      display: grid;
+      gap: 1.25rem;
+      align-content: start;
+      border-top: 1px solid var(--line);
+      padding-top: 1.25rem;
+    }
+
+    .snake-side h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
     .color-box {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
+      display: grid;
+      gap: 0.65rem;
       border: 1px solid var(--line);
-      background: var(--surface-2);
-      border-radius: 999px;
-      padding: 0.3rem 0.5rem 0.3rem 0.75rem;
-      min-width: 124px;
-      cursor: pointer;
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 0.65rem;
       transition: border-color 150ms ease;
     }
 
@@ -91,9 +136,25 @@
       font-weight: 500;
     }
 
+    .color-choice {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .color-swatch {
+      width: 1.45rem;
+      height: 1.45rem;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.18);
+    }
+
     .color-picker {
       border: 1px solid var(--line);
-      border-radius: 999px;
+      border-radius: 8px;
       padding: 0.28rem 0.65rem;
       min-width: 78px;
       background: var(--bg);
@@ -107,29 +168,56 @@
       color: #09090b;
     }
 
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.4rem;
+    }
+
+    .palette-swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      min-height: 0;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    }
+
+    .palette-swatch.active {
+      border-color: #e4e4e7;
+      box-shadow: 0 0 0 2px #09090b, 0 0 0 4px #e4e4e7;
+    }
+
+    .palette-swatch:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
 
 .snake-board-wrap {
       border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
+      border-radius: 10px;
       background: var(--bg);
-      padding: 0.75rem;
+      padding: clamp(0.5rem, 1.5vw, 0.9rem);
       display: grid;
       place-items: center;
     }
 
     #snake-board {
       display: block;
-      width: min(100%, 480px);
+      width: min(100%, 560px);
       height: auto;
       border: 1px solid var(--line);
-      border-radius: var(--radius);
+      border-radius: 8px;
       background: #050507;
       image-rendering: pixelated;
     }
 
     .snake-help {
       margin: 0;
-      font-size: 0.9rem;
+      color: var(--muted);
+      font-size: 0.88rem;
     }
 
     .touch-controls {
@@ -137,16 +225,32 @@
       grid-template-columns: repeat(3, 54px);
       justify-content: center;
       gap: 0.42rem;
-      margin-top: 0.5rem;
+      margin-top: 0;
     }
 
     .touch-controls button {
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 0.6rem 0;
     }
 
     .touch-controls .empty {
       visibility: hidden;
+    }
+
+    @media (max-width: 820px) {
+      .snake-page {
+        width: min(100% - 1.25rem, 1040px);
+        padding-top: 1.5rem;
+      }
+
+      .snake-hero,
+      .snake-game {
+        grid-template-columns: 1fr;
+      }
+
+      .snake-side {
+        order: -1;
+      }
     }
   </style>
 </head>
@@ -164,62 +268,90 @@
     </div>
   </header>
 
-  <main class="page">
-    <article class="panel snake-layout">
-      <h1 class="snake-headline">Snake</h1>
-      <p class="lead">Use arrow keys or WASD to move. Any movement key starts the game. Avoid walls and your own tail.</p>
-
-      <div class="snake-topbar">
-        <div class="snake-metrics">
-          <span class="chip">Score: <strong id="score">0</strong></span>
-          <span class="chip">Best: <strong id="best">0</strong></span>
-          <span class="chip">State: <strong id="state">Ready</strong></span>
+  <main class="page snake-page">
+    <article class="snake-layout">
+      <section class="snake-hero" aria-labelledby="snake-title">
+        <div class="snake-hero-copy">
+          <span class="kicker">Arcade</span>
+          <h1 id="snake-title" class="snake-headline">Snake</h1>
+          <p class="lead">Use arrow keys or WASD to move. Any movement key starts the game. Avoid walls and your own tail.</p>
         </div>
         <div class="snake-actions">
           <button id="start-btn" type="button">Start</button>
           <button id="restart-btn" type="button">Restart</button>
         </div>
-      </div>
+      </section>
 
-      <div class="snake-pickers" aria-label="Color pickers">
-        <label class="color-box" for="snake-color">
-          <span>Snake</span>
-          <select id="snake-color" class="color-picker" title="Snake color" aria-label="Snake color">
-            <option value="#7cf7d2" style="background:#7cf7d2;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#56d4ff" style="background:#56d4ff;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#f97316" style="background:#f97316;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#ef4444" style="background:#ef4444;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#a855f7" style="background:#a855f7;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#facc15" style="background:#facc15;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-          </select>
-        </label>
-        <label class="color-box" for="food-color">
-          <span>Food</span>
-          <select id="food-color" class="color-picker" title="Food color" aria-label="Food color">
-            <option value="#56d4ff" style="background:#56d4ff;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#f43f5e" style="background:#f43f5e;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#facc15" style="background:#facc15;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#22c55e" style="background:#22c55e;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#a855f7" style="background:#a855f7;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-            <option value="#fb923c" style="background:#fb923c;">&nbsp;&nbsp;&nbsp;&nbsp;</option>
-          </select>
-        </label>
-      </div>
+      <section class="snake-game" aria-label="Snake game">
+        <div class="snake-board-wrap">
+          <canvas id="snake-board" width="480" height="480" aria-label="Snake game board"></canvas>
+        </div>
 
-      <div class="snake-board-wrap">
-        <canvas id="snake-board" width="480" height="480" aria-label="Snake game board"></canvas>
-      </div>
+        <aside class="snake-side" aria-label="Game settings">
+          <div class="snake-topbar">
+            <div class="snake-metrics">
+              <span class="chip">Score <strong id="score">0</strong></span>
+              <span class="chip">Best <strong id="best">0</strong></span>
+              <span class="chip">State <strong id="state">Ready</strong></span>
+            </div>
+          </div>
 
-      <p class="snake-help">Controls: Arrow keys / WASD. On mobile, use the directional buttons below.</p>
+          <div class="snake-pickers" aria-label="Color pickers">
+            <h2>Colors</h2>
+            <label class="color-box" for="snake-color">
+              <span>Snake</span>
+              <span class="color-choice">
+                <span class="color-swatch" data-swatch-for="snake-color" aria-hidden="true"></span>
+                <select id="snake-color" class="color-picker" title="Snake color" aria-label="Snake color">
+                  <option value="#7cf7d2" style="background:#7cf7d2;">Mint</option>
+                  <option value="#56d4ff" style="background:#56d4ff;">Sky</option>
+                  <option value="#22c55e" style="background:#22c55e;">Green</option>
+                  <option value="#84cc16" style="background:#84cc16;">Lime</option>
+                  <option value="#facc15" style="background:#facc15;">Yellow</option>
+                  <option value="#f97316" style="background:#f97316;">Orange</option>
+                  <option value="#fb923c" style="background:#fb923c;">Peach</option>
+                  <option value="#f43f5e" style="background:#f43f5e;">Rose</option>
+                  <option value="#ef4444" style="background:#ef4444;">Red</option>
+                  <option value="#a855f7" style="background:#a855f7;">Purple</option>
+                  <option value="#6366f1" style="background:#6366f1;">Indigo</option>
+                  <option value="#e4e4e7" style="background:#e4e4e7;">White</option>
+                </select>
+              </span>
+            </label>
+            <label class="color-box" for="food-color">
+              <span>Food</span>
+              <span class="color-choice">
+                <span class="color-swatch" data-swatch-for="food-color" aria-hidden="true"></span>
+                <select id="food-color" class="color-picker" title="Food color" aria-label="Food color">
+                  <option value="#7cf7d2" style="background:#7cf7d2;">Mint</option>
+                  <option value="#56d4ff" style="background:#56d4ff;">Sky</option>
+                  <option value="#22c55e" style="background:#22c55e;">Green</option>
+                  <option value="#84cc16" style="background:#84cc16;">Lime</option>
+                  <option value="#facc15" style="background:#facc15;">Yellow</option>
+                  <option value="#f97316" style="background:#f97316;">Orange</option>
+                  <option value="#fb923c" style="background:#fb923c;">Peach</option>
+                  <option value="#f43f5e" style="background:#f43f5e;" selected>Rose</option>
+                  <option value="#ef4444" style="background:#ef4444;">Red</option>
+                  <option value="#a855f7" style="background:#a855f7;">Purple</option>
+                  <option value="#6366f1" style="background:#6366f1;">Indigo</option>
+                  <option value="#e4e4e7" style="background:#e4e4e7;">White</option>
+                </select>
+              </span>
+            </label>
+          </div>
 
-      <div class="touch-controls" aria-label="Touch controls">
-        <span class="empty"></span>
-        <button data-dir="up" type="button">Up</button>
-        <span class="empty"></span>
-        <button data-dir="left" type="button">Left</button>
-        <button data-dir="down" type="button">Down</button>
-        <button data-dir="right" type="button">Right</button>
-      </div>
+          <p class="snake-help">Controls: Arrow keys / WASD. On mobile, use the directional buttons below.</p>
+
+          <div class="touch-controls" aria-label="Touch controls">
+            <span class="empty"></span>
+            <button data-dir="up" type="button">Up</button>
+            <span class="empty"></span>
+            <button data-dir="left" type="button">Left</button>
+            <button data-dir="down" type="button">Down</button>
+            <button data-dir="right" type="button">Right</button>
+          </div>
+        </aside>
+      </section>
     </article>
   </main>
 
@@ -238,6 +370,7 @@
       const tileSize = 24;
       const tiles = board.width / tileSize;
       const speed = 120;
+      const dangerSpeed = 180;
       const bestKey = "scout_og_snake_best";
 
       let snake;
@@ -306,12 +439,53 @@
         selectEl.style.background = "#09090b";
         selectEl.style.color = "#ffffff";
         selectEl.style.borderColor = luminance > 0.55 ? "#3f3f46" : "#52525b";
+        const swatch = document.querySelector('[data-swatch-for="' + selectEl.id + '"]');
+        if (swatch) {
+          swatch.style.background = hex;
+          swatch.style.boxShadow = "0 0 22px " + hex + "55, 0 0 0 3px rgba(0, 0, 0, 0.18)";
+        }
+        document.querySelectorAll('[data-color-target="' + selectEl.id + '"]').forEach(function (button) {
+          const active = button.getAttribute("data-color-value") === hex;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
         const wrapper = selectEl.closest(".color-box");
         if (wrapper) {
           wrapper.style.borderColor = luminance > 0.55 ? "#3f3f46" : "#52525b";
           wrapper.style.background = shade(hex, -140);
         }
       }
+
+      function buildPalette(selectEl) {
+        const wrapper = selectEl.closest(".color-box");
+        if (!wrapper || wrapper.querySelector(".palette-grid")) {
+          return;
+        }
+
+        const palette = document.createElement("div");
+        palette.className = "palette-grid";
+        palette.setAttribute("aria-label", selectEl.getAttribute("aria-label") + " choices");
+
+        Array.from(selectEl.options).forEach(function (option) {
+          const button = document.createElement("button");
+          button.className = "palette-swatch";
+          button.type = "button";
+          button.title = option.textContent;
+          button.setAttribute("aria-label", option.textContent);
+          button.setAttribute("aria-pressed", "false");
+          button.setAttribute("data-color-target", selectEl.id);
+          button.setAttribute("data-color-value", option.value);
+          button.style.background = option.value;
+          button.addEventListener("click", function () {
+            selectEl.value = option.value;
+            selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+          palette.appendChild(button);
+        });
+
+        wrapper.appendChild(palette);
+      }
+
       function resetGame() {
         snake = [
           { x: 10, y: 10 },
@@ -370,6 +544,16 @@
         return snake.some((part) => part.x === point.x && part.y === point.y);
       }
 
+      function nextMoveWouldCollide() {
+        const head = snake[0];
+        return collide({ x: head.x + nextDir.x, y: head.y + nextDir.y });
+      }
+
+      function scheduleTick() {
+        clearTimeout(loopId);
+        loopId = setTimeout(tick, nextMoveWouldCollide() ? dangerSpeed : speed);
+      }
+
       function tick() {
         dir = nextDir;
         const head = snake[0];
@@ -378,7 +562,7 @@
         if (collide(nextHead)) {
           running = false;
           gameOver = true;
-          clearInterval(loopId);
+          clearTimeout(loopId);
           setState("Game Over");
           saveBest(score);
           return;
@@ -395,6 +579,9 @@
         }
 
         draw();
+        if (running) {
+          scheduleTick();
+        }
       }
 
       function setDirection(dx, dy) {
@@ -415,12 +602,11 @@
 
         running = true;
         setState("Running");
-        clearInterval(loopId);
-        loopId = setInterval(tick, speed);
+        scheduleTick();
       }
 
       function restartGame() {
-        clearInterval(loopId);
+        clearTimeout(loopId);
         resetGame();
       }
 
@@ -486,6 +672,8 @@
       restartBtn.addEventListener("click", restartGame);
 
       loadBest();
+      buildPalette(snakeColorSelect);
+      buildPalette(foodColorSelect);
       applyPickerVisual(snakeColorSelect);
       applyPickerVisual(foodColorSelect);
       resetGame();
@@ -493,9 +681,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
