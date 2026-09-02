@@ -9,6 +9,7 @@ Static website hosted on GitHub Pages.
 - `index.html` - Daily Brief landing page
 - `snake.html` - Playable Snake game
 - `crime.html` - County Crime Atlas
+- `running.html` - Private running-progress dashboard
 - `styles.css` - Shared site styling
 - `CNAME` - Custom domain configuration (`scout-og.com`)
 
@@ -26,6 +27,22 @@ Static website hosted on GitHub Pages.
 - Game starts on first movement key
 - Restart support and best-score persistence (`localStorage`)
 - Predefined color swatch selectors for snake and food
+
+## Running Dashboard
+- Static private dashboard at `https://scout-og.com/running.html`
+- Supabase password authentication using one fixed account
+- Postgres storage with row-level security migrations in `supabase/migrations`
+- Health Auto Export ingestion Edge Function in `supabase/functions/import-health-data`
+- Notes, deletion controls, Health Auto Export ingestion, and responsive Chart.js views
+- Setup guide: `docs/running-dashboard.md`
+
+## Local Validation
+Use the bundled or system Node runtime:
+
+```sh
+node --test
+node scripts/validate-static-site.js
+```
 
 ## Deployment
 GitHub Actions deploys on push to `master` via:

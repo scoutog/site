@@ -1,0 +1,44 @@
+{
+  "exportIdentifier": "sanitized-dev-sample-2026-09-02",
+  "workouts": [
+    {
+      "source": "Health Auto Export",
+      "uuid": "sample-running-comeback-001",
+      "workoutActivityType": "HKWorkoutActivityTypeRunning",
+      "startDate": "2026-08-30T11:04:00-04:00",
+      "endDate": "2026-08-30T11:35:27-04:00",
+      "duration": "31:27",
+      "distance": "2.50 mi",
+      "averageHeartRate": 172,
+      "minimumHeartRate": 128,
+      "maximumHeartRate": 190,
+      "perceivedEffort": "Sample",
+      "splits": [
+        { "splitNumber": 1, "distance": "1.00 mi", "duration": "12:32", "averageHeartRate": 164 },
+        { "splitNumber": 2, "distance": "1.00 mi", "duration": "12:31", "averageHeartRate": 178 },
+        { "splitNumber": 3, "distance": "0.50 mi", "duration": "6:24", "averageHeartRate": 178 }
+      ],
+      "heartRateZones": [
+        { "zone": 1, "lowerBound": 0, "upperBound": 129, "duration": "0:53" },
+        { "zone": 2, "lowerBound": 130, "upperBound": 149, "duration": "3:25" },
+        { "zone": 3, "lowerBound": 150, "upperBound": 164, "duration": "5:46" },
+        { "zone": 4, "lowerBound": 165, "upperBound": 179, "duration": "4:58" },
+        { "zone": 5, "lowerBound": 180, "upperBound": null, "duration": "16:07" }
+      ],
+      "intervals": [
+        { "intervalNumber": 1, "type": "work", "duration": "1:00", "distance": "0.08 mi", "averageHeartRate": 151 },
+        { "intervalNumber": 2, "type": "recovery", "duration": "1:00", "distance": "0.07 mi", "averageHeartRate": 158 },
+        { "intervalNumber": 3, "type": "work", "duration": "1:00", "distance": "0.08 mi", "averageHeartRate": 168 },
+        { "intervalNumber": 4, "type": "recovery", "duration": "1:00", "distance": "0.07 mi", "averageHeartRate": 171 },
+        { "intervalNumber": 5, "type": "work", "duration": "1:00", "distance": "0.08 mi", "averageHeartRate": 181 },
+        { "intervalNumber": 6, "type": "recovery", "duration": "1:00", "distance": "0.07 mi", "averageHeartRate": 176 }
+      ],
+      "heartRateRecovery": {
+        "endingHeartRate": 188,
+        "oneMinuteHeartRate": 170,
+        "twoMinuteHeartRate": 158
+      },
+      "notes": "Sanitized sample data for local dashboard development only."
+    }
+  ]
+}

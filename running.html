@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; img-src 'self' data: blob:; font-src https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co;">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Running Dashboard | Scout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=29">
+  <script src="/running-config.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script type="module" src="/running-app.js?v=12"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="/">Scout</a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/">Daily Brief</a>
+        <a href="/snake.html">Snake</a>
+        <a href="/crime.html">Crime</a>
+        <a class="active" href="/running.html">Running</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page running-page">
+    <section id="running-lock" class="running-lock" aria-labelledby="running-lock-title">
+      <form id="unlock-form" class="running-lock-form">
+        <h1 id="running-lock-title">Running Dashboard</h1>
+        <label class="running-field">
+          <span>Password</span>
+          <input id="running-password" type="password" autocomplete="current-password" required>
+        </label>
+        <label class="running-check">
+          <input id="remember-device" type="checkbox">
+          <span>Remember this device</span>
+        </label>
+        <button id="unlock-button" type="submit">Unlock</button>
+        <p id="lock-message" class="running-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="running-dashboard" class="running-dashboard" hidden inert aria-hidden="true">
+      <div class="running-hero">
+        <div>
+          <h1>Running</h1>
+        </div>
+        <div class="running-actions">
+          <label class="running-control">
+            <span>Range</span>
+            <select id="range-filter">
+              <option value="28">Four weeks</option>
+              <option value="90">Three months</option>
+              <option value="182">Six months</option>
+              <option value="365">One year</option>
+              <option value="all">All time</option>
+            </select>
+          </label>
+          <button id="refresh-data-button" type="button">Refresh</button>
+          <button id="logout-button" type="button">Log out</button>
+        </div>
+      </div>
+
+      <section class="month-run-strip" aria-labelledby="month-strip-title">
+        <div class="month-strip-head">
+          <h2 id="month-strip-title">This Month</h2>
+        </div>
+        <div id="month-run-days" class="month-run-days"></div>
+        <p id="month-run-summary" class="month-run-summary"></p>
+      </section>
+
+      <div id="dashboard-message" class="running-banner" role="status" aria-live="polite" hidden></div>
+
+      <section id="empty-state" class="running-empty" hidden>
+        <h2>No workouts imported yet</h2>
+        <p>Once Health Auto Export sends a workout, it will appear here automatically. Use Refresh after a sync finishes.</p>
+      </section>
+
+      <section class="running-grid running-overview" aria-label="Running overview">
+        <div class="running-overview-stack">
+          <article class="running-section running-goal">
+            <div class="running-section-head">
+              <div>
+                <h2>Current Goal</h2>
+              </div>
+            </div>
+            <div id="goal-boxes" class="goal-boxes" aria-label="Goal tracker"></div>
+            <div class="running-stat-grid">
+              <div><span>Completed</span><strong id="runs-completed">Missing</strong></div>
+              <div><span>Remaining</span><strong id="runs-remaining">Missing</strong></div>
+              <div><span>Progress</span><strong id="goal-percent">Missing</strong></div>
+              <div><span>Past 28 days</span><strong id="runs-28-days">Missing</strong></div>
+              <div><span>Weekly streak</span><strong id="weekly-streak">Missing</strong></div>
+              <div><span>Days since run</span><strong id="days-since-run">Missing</strong></div>
+            </div>
+          </article>
+
+          <section class="running-section running-trends">
+            <div class="running-section-head">
+              <div>
+                <h2>Training Trends</h2>
+                <p class="brief-sub">Rule-based observations only. These are training trends, not medical guidance.</p>
+              </div>
+            </div>
+            <div id="trend-observations" class="trend-observations"></div>
+          </section>
+        </div>
+
+        <article class="running-section running-latest">
+          <div class="running-section-head">
+            <div>
+              <h2>Latest Workout</h2>
+              <p class="brief-sub">Missing values are shown as missing, never as zero.</p>
+            </div>
+          </div>
+          <div id="latest-workout" class="latest-workout"></div>
+        </article>
+      </section>
+
+      <details id="workouts-details" class="running-section running-workouts-drawer">
+        <summary>
+          <span>Workouts</span>
+          <small>Open workout history and details</small>
+        </summary>
+        <div class="running-table-wrap">
+          <table class="running-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Distance</th>
+                <th scope="col">Duration</th>
+                <th scope="col">Pace</th>
+                <th scope="col">Avg HR</th>
+                <th scope="col">Zone 5</th>
+                <th scope="col">Detail</th>
+              </tr>
+            </thead>
+            <tbody id="workouts-table"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <section class="running-section">
+        <div class="running-section-head chart-toolbar">
+          <div>
+            <h2>Charts</h2>
+          </div>
+          <label class="running-check">
+            <input id="rolling-toggle" type="checkbox">
+            <span>Rolling trends</span>
+          </label>
+        </div>
+        <div id="charts-grid" class="charts-grid">
+          <article class="chart-card"><h3>Average pace by workout</h3><canvas id="pace-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Average heart rate by workout</h3><canvas id="hr-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card chart-wide"><h3>Pace and heart rate over time</h3><canvas id="pace-hr-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Rolling three-workout pace and HR</h3><canvas id="rolling-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Weekly workout count</h3><canvas id="weekly-count-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Weekly distance</h3><canvas id="weekly-distance-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Weekly workout duration</h3><canvas id="weekly-duration-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card chart-wide"><h3>Zone distribution by workout</h3><canvas id="zone-distribution-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Zone 5 percentage over time</h3><canvas id="zone5-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Work and recovery time</h3><canvas id="run-walk-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Average work-interval pace</h3><canvas id="work-pace-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Work versus recovery heart rate</h3><canvas id="work-recovery-hr-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Pace versus average HR</h3><canvas id="scatter-chart"></canvas><p class="chart-empty"></p></article>
+          <article class="chart-card"><h3>Post-workout HR recovery</h3><canvas id="recovery-chart"></canvas><p class="chart-empty"></p></article>
+        </div>
+      </section>
+
+      <details id="running-settings" class="running-section running-workouts-drawer running-settings-drawer">
+        <summary>
+          <span>Settings & Data</span>
+          <small>Goal, units, timezone, and heart-rate zones</small>
+        </summary>
+        <div class="settings-grid">
+          <form id="settings-form" class="settings-panel">
+            <h3>Goal configuration</h3>
+            <label class="running-field"><span>Goal runs per week</span><input id="goal-target" type="number" min="1" step="1"></label>
+            <input id="goal-days" type="hidden" value="7">
+            <label class="running-field"><span>Minimum counted workout seconds</span><input id="minimum-seconds" type="number" min="0" step="30"></label>
+            <label class="running-field"><span>Distance unit</span><select id="distance-unit"><option value="mi">Miles</option><option value="km">Kilometers</option></select></label>
+            <label class="running-field"><span>Timezone</span><input id="timezone-input" type="text" placeholder="America/New_York"></label>
+            <button type="submit">Save settings</button>
+          </form>
+
+          <form id="zone-form" class="settings-panel">
+            <h3>Heart-rate-zone boundaries</h3>
+            <div id="zone-inputs" class="zone-inputs"></div>
+            <button type="submit">Save zones</button>
+          </form>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <dialog id="workout-dialog" class="workout-dialog">
+    <form method="dialog" class="dialog-shell">
+      <div class="dialog-head">
+        <div>
+          <h2 id="dialog-title">Workout Detail</h2>
+          <p id="dialog-subtitle" class="brief-sub"></p>
+        </div>
+        <button value="close" aria-label="Close workout detail">Close</button>
+      </div>
+      <div id="dialog-body" class="dialog-body"></div>
+    </form>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "data": {
+    "workouts": [
+      {
+        "id": "sanitized-v2-running-001",
+        "name": "Outdoor Run",
+        "start": "2026-09-02 09:36:50 -0400",
+        "end": "2026-09-02 10:09:35 -0400",
+        "duration": 1890.94,
+        "distance": { "qty": 2.5069, "units": "mi" },
+        "speed": { "qty": 4.77, "units": "mi/hr" },
+        "elevationUp": { "qty": 3.44, "units": "ft" },
+        "activeEnergyBurned": { "qty": 338.2, "units": "kcal" },
+        "totalEnergy": { "qty": 406.5, "units": "kcal" },
+        "heartRate": {
+          "avg": { "qty": 171.1, "units": "count/min" },
+          "max": { "qty": 206, "units": "count/min" },
+          "min": { "qty": 104, "units": "count/min" }
+        },
+        "heartRateData": [
+          { "Avg": 104, "Max": 104, "Min": 104, "date": "2026-09-02 09:36:00 -0400", "units": "count/min" },
+          { "Avg": 149, "Max": 176, "Min": 118, "date": "2026-09-02 09:37:00 -0400", "units": "count/min" },
+          { "Avg": 171, "Max": 191, "Min": 155, "date": "2026-09-02 09:38:00 -0400", "units": "count/min" },
+          { "Avg": 184, "Max": 195, "Min": 170, "date": "2026-09-02 09:39:00 -0400", "units": "count/min" }
+        ],
+        "heartRateRecovery": [
+          { "Avg": 177, "date": "2026-09-02 10:09:35 -0400", "units": "count/min" },
+          { "Avg": 155, "date": "2026-09-02 10:10:35 -0400", "units": "count/min" },
+          { "Avg": 136, "date": "2026-09-02 10:11:35 -0400", "units": "count/min" }
+        ],
+        "walkingAndRunningDistance": [
+          { "qty": 0.10, "date": "2026-09-02 09:36:50 -0400", "units": "mi" },
+          { "qty": 0.05, "date": "2026-09-02 09:37:50 -0400", "units": "mi" },
+          { "qty": 0.10, "date": "2026-09-02 09:38:50 -0400", "units": "mi" },
+          { "qty": 0.05, "date": "2026-09-02 09:39:50 -0400", "units": "mi" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "scout-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/validate-static-site.js"
+  },
+  "devDependencies": {}
+}
