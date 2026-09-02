@@ -6,21 +6,20 @@ Static website hosted on GitHub Pages.
 - Primary domain: `https://scout-og.com`
 
 ## Current Pages
-- `index.html` - Daily Brief landing page
+- `index.html` - Scout landing page
 - `snake.html` - Playable Snake game
 - `crime.html` - County Crime Atlas
 - `running.html` - Private running-progress dashboard
 - `styles.css` - Shared site styling
 - `CNAME` - Custom domain configuration (`scout-og.com`)
 
-## Daily Brief Features
+## Landing Page Features
 - Date, moon phase, and ZIP-based local weather
 - 24-hour weather chart (temperature, conditions, precipitation)
 - Top stories feed
 - On This Day fact
-- SAT-style Word of the Day
 - XKCD daily comic
-- Market Snapshot (SPY, VOO, NKE) with 1D change and Yahoo Finance detail links
+- Market Snapshot (VOO, QQQM, NKE, RKLB) with 1D change and Yahoo Finance detail links
 
 ## Snake Features
 - Keyboard controls: Arrow keys / WASD

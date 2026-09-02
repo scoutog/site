@@ -19,31 +19,6 @@
       gap: clamp(1.5rem, 4vw, 3rem);
     }
 
-    .snake-hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: clamp(1rem, 4vw, 3rem);
-      align-items: end;
-      border-bottom: 1px solid var(--line);
-      padding-bottom: clamp(1.25rem, 3vw, 2.2rem);
-    }
-
-    .snake-hero-copy {
-      display: grid;
-      gap: 0.65rem;
-    }
-
-    .snake-headline {
-      font-size: clamp(2.2rem, 6vw, 4.2rem);
-      line-height: 0.98;
-      letter-spacing: 0;
-    }
-
-    .snake-hero .lead {
-      max-width: 48ch;
-      margin-top: 0;
-    }
-
     .snake-topbar {
       display: grid;
       gap: 1rem;
@@ -243,7 +218,6 @@
         padding-top: 1.5rem;
       }
 
-      .snake-hero,
       .snake-game {
         grid-template-columns: 1fr;
       }
@@ -259,7 +233,7 @@
     <div class="nav-wrap">
       <a class="brand" href="/">Scout</a>
       <nav class="nav-links" aria-label="Primary">
-        <a href="/">Daily Brief</a>
+        <a href="/">Home</a>
         <a class="active" href="/snake.html">Snake</a>
         <a href="/crime.html">Crime</a>
         <a href="/running.html">Running</a>
@@ -269,18 +243,6 @@
 
   <main class="page snake-page">
     <article class="snake-layout">
-      <section class="snake-hero" aria-labelledby="snake-title">
-        <div class="snake-hero-copy">
-          <span class="kicker">Arcade</span>
-          <h1 id="snake-title" class="snake-headline">Snake</h1>
-          <p class="lead">Use arrow keys or WASD to move. Any movement key starts the game. Avoid walls and your own tail.</p>
-        </div>
-        <div class="snake-actions">
-          <button id="start-btn" type="button">Start</button>
-          <button id="restart-btn" type="button">Restart</button>
-        </div>
-      </section>
-
       <section class="snake-game" aria-label="Snake game">
         <div class="snake-board-wrap">
           <canvas id="snake-board" width="480" height="480" aria-label="Snake game board"></canvas>
@@ -288,6 +250,10 @@
 
         <aside class="snake-side" aria-label="Game settings">
           <div class="snake-topbar">
+            <div class="snake-actions">
+              <button id="start-btn" type="button">Start</button>
+              <button id="restart-btn" type="button">Restart</button>
+            </div>
             <div class="snake-metrics">
               <span class="chip">Score <strong id="score">0</strong></span>
               <span class="chip">Best <strong id="best">0</strong></span>

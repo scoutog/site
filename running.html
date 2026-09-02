@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=29">
+  <link rel="stylesheet" href="/styles.css?v=30">
   <script src="/running-config.js?v=3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -20,7 +20,7 @@
     <div class="nav-wrap">
       <a class="brand" href="/">Scout</a>
       <nav class="nav-links" aria-label="Primary">
-        <a href="/">Daily Brief</a>
+        <a href="/">Home</a>
         <a href="/snake.html">Snake</a>
         <a href="/crime.html">Crime</a>
         <a class="active" href="/running.html">Running</a>
@@ -46,24 +46,19 @@
     </section>
 
     <section id="running-dashboard" class="running-dashboard" hidden inert aria-hidden="true">
-      <div class="running-hero">
-        <div>
-          <h1>Running</h1>
-        </div>
-        <div class="running-actions">
-          <label class="running-control">
-            <span>Range</span>
-            <select id="range-filter">
-              <option value="28">Four weeks</option>
-              <option value="90">Three months</option>
-              <option value="182">Six months</option>
-              <option value="365">One year</option>
-              <option value="all">All time</option>
-            </select>
-          </label>
-          <button id="refresh-data-button" type="button">Refresh</button>
-          <button id="logout-button" type="button">Log out</button>
-        </div>
+      <div class="running-actions running-actions-top">
+        <label class="running-control">
+          <span>Range</span>
+          <select id="range-filter">
+            <option value="28">Four weeks</option>
+            <option value="90">Three months</option>
+            <option value="182">Six months</option>
+            <option value="365">One year</option>
+            <option value="all">All time</option>
+          </select>
+        </label>
+        <button id="refresh-data-button" type="button">Refresh</button>
+        <button id="logout-button" type="button">Log out</button>
       </div>
 
       <section class="month-run-strip" aria-labelledby="month-strip-title">

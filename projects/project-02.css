@@ -30,24 +30,6 @@
   z-index: 1;
 }
 
-.crime-stage-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.crime-stage-head h1 {
-  margin: 0.25rem 0 0;
-  max-width: 14ch;
-}
-
-.crime-stage-lead {
-  max-width: 58ch;
-  color: var(--crime-muted);
-  margin: 0.65rem 0 0;
-}
-
 .crime-stage-controls {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 1.25rem;
@@ -666,7 +648,6 @@
     grid-template-columns: 1fr;
   }
 
-  .crime-stage-head,
   .crime-stage-meta-copy,
   .crime-panel-head,
   .crime-breakdown-line {
@@ -686,15 +667,10 @@
   padding-top: clamp(2rem, 5vw, 4.5rem);
 }
 
-.crime-hero {
-  border-bottom: 1px solid var(--crime-line);
-  padding-bottom: clamp(1.25rem, 3vw, 2.2rem);
-}
-
 .crime-stack {
   display: grid;
   gap: clamp(1.5rem, 4vw, 3rem);
-  margin-top: clamp(1.5rem, 4vw, 3rem);
+  margin-top: 0;
 }
 
 .crime-section {
@@ -702,29 +678,15 @@
   padding-top: clamp(1.1rem, 2.8vw, 1.8rem);
 }
 
+.crime-section:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
 .crime-section > .crime-panel-head:first-child h2,
 .crime-map-title-row h3 {
   margin: 0;
   letter-spacing: 0;
-}
-
-.crime-stage-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: clamp(1rem, 4vw, 3rem);
-}
-
-.crime-stage-head h1 {
-  max-width: none;
-  font-size: clamp(2.2rem, 6vw, 4.2rem);
-  line-height: 0.98;
-  letter-spacing: 0;
-}
-
-.crime-stage-lead {
-  max-width: 54ch;
-  margin-top: 0.65rem;
 }
 
 .crime-map-buttons {
@@ -825,11 +787,6 @@
   .crime-page {
     width: min(100% - 1.25rem, 1040px);
     padding-top: 1.5rem;
-  }
-
-  .crime-stage-head {
-    grid-template-columns: 1fr;
-    align-items: start;
   }
 
   .crime-map-buttons {

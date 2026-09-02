@@ -253,7 +253,7 @@ li + li {
   font-size: 0.88rem;
 }
 
-/* ── Daily Brief ── */
+/* ── Landing Page ── */
 
 .brief-hero {
   margin-bottom: 1.25rem;
@@ -289,7 +289,7 @@ li + li {
 
 .brief-hero-v2 {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: clamp(1.1rem, 3vw, 2rem);
   margin-bottom: clamp(2rem, 5vw, 4rem);
 }
@@ -298,7 +298,7 @@ li + li {
   display: grid;
   align-content: end;
   gap: 0.65rem;
-  padding-right: min(14rem, 32vw);
+  grid-column: 1;
 }
 
 .brief-location {
@@ -308,19 +308,24 @@ li + li {
   font-weight: 500;
 }
 
-.morning-top-row {
+.brief-moon-banner {
   display: grid;
-  grid-template-columns: minmax(220px, 0.38fr) minmax(0, 1fr);
-  gap: clamp(1rem, 3vw, 2rem);
-  align-items: start;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 0.9rem;
+  grid-template-columns: minmax(14rem, 0.46fr) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid rgba(228, 228, 231, 0.14);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 10% 50%, rgba(245, 158, 11, 0.14), transparent 32%),
+    linear-gradient(135deg, rgba(24, 24, 27, 0.92), rgba(9, 9, 11, 0.98));
+  padding: 0.65rem 0.8rem;
+  grid-column: 1 / -1;
 }
 
-.brief-moon-row {
-  display: grid;
-  gap: 0.5rem;
-  min-width: 0;
+.brief-moon-banner .brief-sub {
+  color: #e4e4e7;
+  font-weight: 600;
 }
 
 .moon-strip {
@@ -378,50 +383,18 @@ li + li {
   font-weight: 600;
 }
 
-.brief-top-word {
-  min-width: 0;
-  display: grid;
-  gap: 0.25rem;
-  align-content: start;
-  border-top: 0;
-  padding-top: 0;
-}
-
-.brief-top-word h2 {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.brief-top-word p {
-  margin: 0;
-  display: block;
-  color: var(--muted);
-  font-size: 0.76rem;
-  line-height: 1.35;
-}
-
-.brief-top-word p strong {
-  display: block;
-  margin-bottom: 0.05rem;
-  color: var(--text);
-  font-size: 0.9rem;
-  line-height: 1.2;
-}
-
 /* ── ZIP Form ── */
 
 .zip-form {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: static;
   z-index: 2;
   display: grid;
   justify-items: end;
   align-content: start;
   gap: 0.45rem;
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
   min-width: min(100%, 310px);
 }
 
@@ -509,20 +482,15 @@ li + li {
 
 .brief-page {
   width: min(980px, calc(100% - 2.5rem));
-  padding-top: clamp(2rem, 5vw, 4.5rem);
+  padding-top: clamp(1.25rem, 4vw, 2.75rem);
 }
 
 .morning-hero {
   position: relative;
-  min-height: clamp(220px, 30vh, 340px);
+  min-height: clamp(220px, 28vh, 320px);
   align-items: end;
   border-bottom: 1px solid var(--line);
   padding-bottom: clamp(1.25rem, 3vw, 2.2rem);
-}
-
-.morning-hero .kicker {
-  width: fit-content;
-  margin-bottom: 0.2rem;
 }
 
 .morning-context {
@@ -595,11 +563,6 @@ li + li {
   grid-row: 1 / span 2;
 }
 
-.word-side {
-  grid-column: 9 / span 4;
-  grid-row: 1;
-}
-
 .onthisday-bottom {
   grid-column: 9 / span 4;
   grid-row: 2;
@@ -612,11 +575,6 @@ li + li {
 
 .comic-bottom {
   grid-column: 1 / span 4;
-  grid-row: 4;
-}
-
-.sports-card {
-  grid-column: 5 / span 4;
   grid-row: 4;
 }
 
@@ -652,26 +610,21 @@ li + li {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* ── Word / On-This-Day side cards ── */
+/* ── On-This-Day side cards ── */
 
-.word-side,
 .onthisday-bottom {
   display: grid;
   grid-template-rows: auto 1fr;
 }
 
-.word-side p,
 .onthisday-bottom p {
   margin: 0;
-  display: grid;
-  align-content: center;
-  gap: 0.4rem;
+  display: block;
   line-height: 1.5;
 }
 
-.word-side p strong,
 .onthisday-bottom p strong {
-  display: block;
+  display: inline;
   font-weight: 600;
   color: var(--text);
 }
@@ -709,6 +662,11 @@ li + li {
   border-radius: 0;
   background: transparent;
   padding: 1rem 0;
+}
+
+.news-item.no-image,
+.brief-news-section .news-item.no-image {
+  grid-template-columns: 1fr;
 }
 
 .news-item:hover {
@@ -785,13 +743,6 @@ li + li {
   color: #a1a1aa;
 }
 
-.brief-duo {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(1rem, 3vw, 2rem);
-}
-
-.brief-duo .brief-section,
 .brief-almanac .brief-section {
   border-top: 1px solid var(--line);
   padding-top: 1.25rem;
@@ -805,9 +756,7 @@ li + li {
 
 .brief-stack .weather-primary,
 .brief-stack .news-card-wide,
-.brief-duo .sports-card,
-.brief-duo .market-side,
-.brief-almanac .word-side,
+.brief-stack .market-wide,
 .brief-almanac .onthisday-bottom,
 .brief-almanac .comic-bottom {
   grid-column: auto;
@@ -826,48 +775,6 @@ li + li {
   background: var(--bg);
 }
 
-/* ── Sports ── */
-
-.sports-list {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.sports-item {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--bg);
-  padding: 0.55rem 0.7rem;
-  display: grid;
-  gap: 0.15rem;
-  text-decoration: none;
-  color: var(--text);
-  transition: border-color 150ms ease;
-}
-
-.sports-item:hover {
-  border-color: #3f3f46;
-}
-
-.sports-item .sports-league {
-  color: var(--accent);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.sports-item strong {
-  font-size: 0.88rem;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.sports-item span {
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-
 /* ── Markets ── */
 
 .market-head {
@@ -882,6 +789,11 @@ li + li {
 .market-form {
   display: grid;
   gap: 0.55rem;
+}
+
+.market-wide .market-head {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  align-items: start;
 }
 
 .market-tickers {
@@ -958,8 +870,9 @@ li + li {
 
 .market-list {
   display: grid;
-  gap: 0.55rem;
-  margin-top: 0.5rem;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1rem;
 }
 
 .market-item {
@@ -1048,14 +961,16 @@ li + li {
 
 @media (max-width: 1100px) {
   .weather-primary,
-  .word-side,
   .news-card-wide,
   .onthisday-bottom,
   .comic-bottom,
-  .sports-card,
   .market-side {
     grid-column: span 12;
     grid-row: auto;
+  }
+
+  .market-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1072,8 +987,19 @@ li + li {
     min-height: auto;
   }
 
-  .brief-duo,
+  .zip-form {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+    justify-items: start;
+  }
+
   .brief-almanac {
+    grid-template-columns: 1fr;
+  }
+
+  .brief-moon-banner,
+  .market-wide .market-head {
     grid-template-columns: 1fr;
   }
 
@@ -1123,6 +1049,10 @@ li + li {
     min-width: 0;
   }
 
+  .market-list {
+    grid-template-columns: 1fr;
+  }
+
   .brief-news-section .news-item {
     grid-template-columns: 1fr;
   }
@@ -1134,12 +1064,6 @@ li + li {
   .brief-news-section .news-item img {
     height: auto;
     min-height: 150px;
-  }
-}
-
-@media (max-width: 560px) {
-  .morning-top-row {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -1172,20 +1096,16 @@ li + li {
   gap: clamp(2rem, 5vw, 4rem);
 }
 
-.running-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: clamp(1rem, 4vw, 3rem);
-  align-items: end;
-  padding-bottom: 0;
-}
-
 .running-actions {
   display: flex;
   align-items: end;
   justify-content: flex-end;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.running-actions-top {
+  margin-bottom: calc(clamp(2rem, 5vw, 4rem) * -0.35);
 }
 
 .running-section {
@@ -1759,7 +1679,6 @@ li + li {
 }
 
 @media (max-width: 900px) {
-  .running-hero,
   .running-grid,
   .settings-grid,
   .charts-grid {

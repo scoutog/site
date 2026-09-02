@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Daily Brief | Scout</title>
+  <title>Scout</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=24">
+  <link rel="stylesheet" href="/styles.css?v=25">
 </head>
 <body>
   <header class="site-header">
     <div class="nav-wrap">
       <a class="brand" href="/">Scout</a>
       <nav class="nav-links" aria-label="Primary">
-        <a class="active" href="/">Daily Brief</a>
+        <a class="active" href="/">Home</a>
         <a href="/snake.html">Snake</a>
         <a href="/crime.html">Crime</a>
         <a href="/running.html">Running</a>
@@ -24,8 +24,12 @@
 
   <main class="page brief-page">
     <section class="brief-hero-v2 morning-hero">
+      <div class="brief-moon-banner" aria-label="Moon phase">
+        <p id="moon-label" class="brief-sub"></p>
+        <div id="moon-strip" class="moon-strip"></div>
+      </div>
+
       <div class="brief-title-wrap">
-        <span class="kicker">Daily Brief</span>
         <h1 id="today-date" class="brief-title">Today</h1>
         <p id="last-updated" class="brief-updated">Loading latest updates...</p>
       </div>
@@ -41,19 +45,6 @@
         </div>
       </form>
 
-      <div class="morning-context">
-        <div class="morning-top-row">
-          <article class="brief-top-word">
-            <h2>Word of the Day</h2>
-            <p id="word-of-day">Loading word...</p>
-          </article>
-
-          <div class="brief-moon-row" aria-label="Moon phase">
-            <div id="moon-strip" class="moon-strip"></div>
-            <p id="moon-label" class="brief-sub"></p>
-          </div>
-        </div>
-      </div>
     </section>
 
     <section class="brief-stack" aria-label="Daily sections">
@@ -76,36 +67,24 @@
         <div id="news-grid" class="news-grid"></div>
       </article>
 
-      <section class="brief-duo" aria-label="Markets and sports">
-        <article class="brief-section sports-card">
-          <div class="brief-card-head">
-            <h2>Sports Snapshot</h2>
-            <p class="brief-sub">Live and upcoming games.</p>
+      <article class="brief-section market-side market-wide">
+        <div class="market-head">
+          <div>
+            <h2>Market Snapshot (1D)</h2>
+            <p id="market-symbols-label" class="brief-sub">VOO, QQQM, NKE, RKLB</p>
           </div>
-          <div id="sports-list" class="sports-list">
-            <p class="brief-sub">Loading sports...</p>
-          </div>
-        </article>
-
-        <article class="brief-section market-side">
-          <div class="market-head">
-            <div>
-              <h2>Market Snapshot (1D)</h2>
-              <p id="market-symbols-label" class="brief-sub">VOO, QQQM, NKE</p>
+          <form id="market-form" class="market-form" autocomplete="off">
+            <div id="market-tickers" class="market-tickers" aria-label="Followed tickers"></div>
+            <div class="market-add">
+              <input id="market-input" name="ticker" spellcheck="false" placeholder="Ticker" aria-label="Add ticker">
+              <button type="submit">Add</button>
             </div>
-            <form id="market-form" class="market-form" autocomplete="off">
-              <div id="market-tickers" class="market-tickers" aria-label="Followed tickers"></div>
-              <div class="market-add">
-                <input id="market-input" name="ticker" spellcheck="false" placeholder="Ticker" aria-label="Add ticker">
-                <button type="submit">Add</button>
-              </div>
-            </form>
-          </div>
-          <div id="market-list" class="market-list">
-            <p class="brief-sub">Loading market snapshot...</p>
-          </div>
-        </article>
-      </section>
+          </form>
+        </div>
+        <div id="market-list" class="market-list">
+          <p class="brief-sub">Loading market snapshot...</p>
+        </div>
+      </article>
 
       <section class="brief-almanac" aria-label="Almanac">
         <article class="brief-section onthisday-bottom">
@@ -139,9 +118,7 @@
       const locationToggle = document.getElementById("location-toggle");
       const locationZipEl = document.getElementById("location-zip");
       const newsGridEl = document.getElementById("news-grid");
-      const sportsListEl = document.getElementById("sports-list");
       const onThisDayEl = document.getElementById("on-this-day");
-      const wordEl = document.getElementById("word-of-day");
       const comicTitleEl = document.getElementById("comic-title");
       const comicLinkEl = document.getElementById("comic-link");
       const comicImageEl = document.getElementById("comic-image");
@@ -153,12 +130,15 @@
 
       const now = new Date();
       const sampledWeather = [];
-      const defaultMarketSymbols = ["VOO", "QQQM", "NKE"];
+      const defaultMarketSymbols = ["VOO", "QQQM", "NKE", "RKLB"];
+      const legacyDefaultMarketSymbols = ["VOO", "QQQM", "NKE"];
       const marketSymbolsKey = "scout_daily_market_symbols";
+      const marketSymbolsVersionKey = "scout_daily_market_symbols_version";
+      const marketSymbolsVersion = "2";
 
       dateEl.textContent = now.toLocaleDateString(undefined, {
         weekday: "long",
-        month: "long",
+        month: "short",
         day: "numeric",
         year: "numeric"
       });
@@ -241,6 +221,14 @@
         moonLabelEl.textContent = moon.label + " now. Next full moon: " + nextFullMoon.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + ".";
       }
 
+      function weatherBarColor(temp, min, max) {
+        const ratio = (temp - min) / Math.max(1, max - min);
+        if (ratio < 0.34) return "#38bdf8";
+        if (ratio < 0.67) return "#34d399";
+        if (ratio < 0.86) return "#f59e0b";
+        return "#fb7185";
+      }
+
       function drawWeatherChart(data) {
         sampledWeather.length = 0;
         data.forEach(function (entry, idx) { sampledWeather.push({ index: idx, x: 0, data: entry }); });
@@ -274,12 +262,16 @@
         const step = chartW / data.length;
         const barW = Math.max(12, step * 0.66);
 
-        ctx.fillStyle = "#818cf8";
         data.forEach(function (entry, idx) {
           const x = pad.left + idx * step + (step - barW) / 2;
           const y = yTemp(entry.temp);
           const base = yTemp(tempMin);
-          ctx.fillRect(x, y, barW, Math.max(2, base - y));
+          const barH = Math.max(2, base - y);
+          const gradient = ctx.createLinearGradient(0, y, 0, base);
+          gradient.addColorStop(0, weatherBarColor(entry.temp, tempMin, tempMax));
+          gradient.addColorStop(1, "rgba(39, 39, 42, 0.45)");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(x, y, barW, barH);
           sampledWeather[idx].x = x + barW / 2;
         });
 
@@ -438,46 +430,28 @@
 
       async function loadNews() {
         const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const fromDate = dayAgo.toISOString().slice(0, 10);
-        const toDate = now.toISOString().slice(0, 10);
-
-        const priorities = [
-          { label: "U.S.", section: "us-news", limit: 2 },
-          { label: "Politics", section: "politics", limit: 2 },
-          { label: "World", section: "world", limit: 2 },
-          { label: "Business", section: "business", limit: 1 },
-          { label: "Tech", section: "technology", limit: 1 }
-        ];
 
         try {
-          const bucketed = await Promise.all(priorities.map(async function (cat) {
-            const url =
-              "https://content.guardianapis.com/search?api-key=test" +
-              "&section=" + encodeURIComponent(cat.section) +
-              "&from-date=" + encodeURIComponent(fromDate) +
-              "&to-date=" + encodeURIComponent(toDate) +
-              "&order-by=newest&page-size=" + encodeURIComponent(cat.limit) +
-              "&show-fields=thumbnail,trailText";
+          const feedUrl = "https://feeds.npr.org/1001/rss.xml";
+          const url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feedUrl);
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) throw new Error("news failed");
+          const data = await response.json();
+          if (data.status !== "ok") throw new Error("news feed failed");
 
-            const response = await fetch(url);
-            if (!response.ok) return [];
-            const data = await response.json();
-            const results = (data.response && data.response.results) || [];
-
-            return results.map(function (result) {
-              return {
-                category: cat.label,
-                title: safeText(result.webTitle, "Untitled"),
-                url: result.webUrl,
-                image: result.fields && result.fields.thumbnail,
-                summary: truncate(stripHtml(result.fields && result.fields.trailText), 170),
-                published: result.webPublicationDate || ""
-              };
-            });
-          }));
-
-          const sortedStories = bucketed.flat().sort(function (a, b) {
-            return new Date(b.published).getTime() - new Date(a.published).getTime();
+          const sortedStories = (data.items || []).map(function (item) {
+            const published = safeText(item.pubDate, "");
+            return {
+              category: "NPR",
+              title: safeText(item.title, "Untitled"),
+              url: item.link,
+              image: item.thumbnail || (item.enclosure && item.enclosure.link),
+              summary: truncate(stripHtml(item.description), 170),
+              published: published,
+              timestamp: Date.parse(published.replace(" ", "T"))
+            };
+          }).sort(function (a, b) {
+            return (b.timestamp || 0) - (a.timestamp || 0);
           });
 
           const seenUrls = {};
@@ -487,94 +461,55 @@
             return true;
           });
 
-          const stories = uniqueStories.slice(0, 6);
+          const recentStories = uniqueStories.filter(function (item) {
+            return Number.isFinite(item.timestamp) && item.timestamp >= dayAgo.getTime();
+          });
+          const stories = (recentStories.length >= 3 ? recentStories : uniqueStories).slice(0, 6);
           if (!stories.length) throw new Error("news empty");
 
-          newsGridEl.innerHTML = "";          stories.forEach(function (item) {
+          newsGridEl.innerHTML = "";
+          stories.forEach(function (item) {
             const card = document.createElement("article");
             card.className = "news-item";
             const summary = item.summary || ("Major update in " + item.category + ". Read for details.");
+            const body = document.createElement("div");
+            const tag = document.createElement("span");
+            const link = document.createElement("a");
+            const desc = document.createElement("p");
 
-            card.innerHTML =
-              (item.image ? "<img src=\"" + item.image + "\" alt=\"News image\" loading=\"lazy\">" : "") +
-              "<div class=\"news-body\">" +
-              "<span class=\"news-tag\">" + item.category + "</span>" +
-              "<a href=\"" + item.url + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + item.title + "</a>" +
-              "<p>" + summary + "</p>" +
-              "</div>";
+            body.className = "news-body";
+            tag.className = "news-tag";
+            tag.textContent = item.category;
+            link.href = item.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = item.title;
+            desc.textContent = summary;
+
+            if (item.image) {
+              const image = document.createElement("img");
+              image.src = item.image;
+              image.alt = "";
+              image.loading = "lazy";
+              card.appendChild(image);
+            } else {
+              card.classList.add("no-image");
+            }
+
+            body.appendChild(tag);
+            body.appendChild(link);
+            body.appendChild(desc);
+            card.appendChild(body);
             newsGridEl.appendChild(card);
           });
         } catch (_) {
           newsGridEl.innerHTML = "<p>News is unavailable right now. Please refresh shortly.</p>";
         }
       }
-      function sportUrl(league) {
-        if (league === "NBA") return "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
-        if (league === "NFL") return "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard";
-        if (league === "MLB") return "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard";
-        if (league === "NHL") return "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard";
-        return "";
-      }
-
-      function parseSportEvent(league, event) {
-        const comp = event && event.competitions && event.competitions[0];
-        if (!comp) return null;
-
-        const competitors = comp.competitors || [];
-        const home = competitors.find(function (t) { return t.homeAway === "home"; }) || competitors[0];
-        const away = competitors.find(function (t) { return t.homeAway === "away"; }) || competitors[1] || competitors[0];
-        const status = (comp.status && comp.status.type && (comp.status.type.shortDetail || comp.status.type.detail)) ||
-          new Date(event.date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-
-        const homeCode = home && home.team && (home.team.abbreviation || home.team.shortDisplayName || home.team.displayName) || "HOME";
-        const awayCode = away && away.team && (away.team.abbreviation || away.team.shortDisplayName || away.team.displayName) || "AWAY";
-        const homeScore = home && home.score ? home.score : "";
-        const awayScore = away && away.score ? away.score : "";
-
-        return {
-          league: league,
-          line: awayCode + (awayScore !== "" ? " " + awayScore : "") + " vs " + homeCode + (homeScore !== "" ? " " + homeScore : ""),
-          status: status,
-          url: event.links && event.links[0] && event.links[0].href ? event.links[0].href : "https://www.espn.com"
-        };
-      }
-
-      async function loadSports() {
-        const leagues = ["NBA", "NFL", "MLB", "NHL"];
-
-        try {
-          const buckets = await Promise.all(leagues.map(async function (league) {
-            const res = await fetch(sportUrl(league), { cache: "no-store" });
-            if (!res.ok) return [];
-            const data = await res.json();
-            const events = data.events || [];
-            return events.slice(0, 2).map(function (event) { return parseSportEvent(league, event); }).filter(Boolean);
-          }));
-
-          const rows = buckets.flat().slice(0, 6);
-          if (!rows.length) throw new Error("no sports");
-
-          sportsListEl.innerHTML = "";
-          rows.forEach(function (row) {
-            const item = document.createElement("a");
-            item.className = "sports-item";
-            item.href = row.url;
-            item.target = "_blank";
-            item.rel = "noopener noreferrer";
-            item.innerHTML =
-              '<span class="sports-league">' + row.league + '</span>' +
-              '<strong>' + row.line + '</strong>' +
-              '<span>' + row.status + '</span>';
-            sportsListEl.appendChild(item);
-          });
-        } catch (_) {
-          sportsListEl.innerHTML = '<p class="brief-sub">Sports snapshot unavailable right now. Refresh shortly.</p>';
-        }
-      }
       function setOnThisDay(year, text) {
         onThisDayEl.innerHTML = "";
         const yearStrong = document.createElement("strong");
-        yearStrong.textContent = year + ":";
+        yearStrong.textContent = year + ": ";
         const detail = document.createElement("span");
         detail.textContent = text;
         onThisDayEl.appendChild(yearStrong);
@@ -613,32 +548,6 @@
         setOnThisDay("On this day", "notable world events occurred across politics, science, and culture. Source feeds are temporarily unavailable.");
       }
 
-      function setWordDefinition(word, definition) {
-        wordEl.innerHTML = "";
-        const wordStrong = document.createElement("strong");
-        wordStrong.textContent = word + ":";
-        const detail = document.createElement("span");
-        detail.textContent = definition;
-        wordEl.appendChild(wordStrong);
-        wordEl.appendChild(detail);
-      }
-
-      async function loadWordOfDay() {
-        const satWords = ["obsequious", "pulchritude", "antediluvian", "perspicacious", "ephemeral", "equanimity", "sesquipedalian", "laconic", "munificent", "ubiquitous", "capricious", "intransigent"];
-        const idx = Math.floor(now.getTime() / 86400000) % satWords.length;
-        const chosen = satWords[idx];
-
-        try {
-          const res = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(chosen));
-          if (!res.ok) throw new Error("dict failed");
-          const data = await res.json();
-          const meaning = data[0] && data[0].meanings && data[0].meanings[0];
-          const definition = meaning && meaning.definitions && meaning.definitions[0] && meaning.definitions[0].definition;
-          setWordDefinition(chosen, safeText(definition, "Definition unavailable."));
-        } catch (_) {
-          setWordDefinition(chosen, "definition unavailable right now.");
-        }
-      }
       function formatSigned(value) {
         return (value > 0 ? "+" : "") + value.toFixed(2);
       }
@@ -743,6 +652,11 @@
         try {
           const saved = JSON.parse(localStorage.getItem(marketSymbolsKey) || "null");
           const symbols = Array.isArray(saved) ? normalizeMarketSymbols(saved) : [];
+          const savedVersion = localStorage.getItem(marketSymbolsVersionKey);
+          const wasLegacyDefault = symbols.join(",") === legacyDefaultMarketSymbols.join(",");
+          if (savedVersion !== marketSymbolsVersion && wasLegacyDefault) {
+            return defaultMarketSymbols.slice();
+          }
           return symbols.length ? symbols : defaultMarketSymbols.slice();
         } catch (_) {
           return defaultMarketSymbols.slice();
@@ -751,6 +665,7 @@
 
       function saveMarketSymbols(symbols) {
         localStorage.setItem(marketSymbolsKey, JSON.stringify(symbols));
+        localStorage.setItem(marketSymbolsVersionKey, marketSymbolsVersion);
       }
 
       function renderMarketTickerControls(symbols) {
@@ -839,9 +754,7 @@
       renderMoon();
       loadWeatherFromZip(zipInput.value || "12210");
       loadNews();
-      loadSports();
       loadOnThisDay();
-      loadWordOfDay();
       loadMarkets();
       loadComic();
     })();
