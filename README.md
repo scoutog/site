@@ -7,9 +7,8 @@ Static website hosted on GitHub Pages.
 
 ## Current Pages
 - `index.html` - Daily Brief landing page
-- `portfolio.html` - Portfolio landing page draft
 - `snake.html` - Playable Snake game
-- `projects/project-02.html` - County Crime Atlas
+- `crime.html` - County Crime Atlas
 - `styles.css` - Shared site styling
 - `CNAME` - Custom domain configuration (`scout-og.com`)
 
