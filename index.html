@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=25">
+  <link rel="stylesheet" href="/styles.css?v=29">
 </head>
 <body>
   <header class="site-header">
@@ -62,8 +62,9 @@
       <article class="brief-section news-card-wide brief-news-section">
         <div class="brief-card-head">
           <h2>Top Stories (Past 24 Hours)</h2>
-          <p class="brief-sub">Priority coverage: U.S., Politics, and World; plus major Business/Tech when relevant.</p>
+          <p id="news-category-summary" class="brief-sub">A blended feed from several outlets.</p>
         </div>
+        <div id="news-category-bar" class="news-category-bar" aria-label="News categories"></div>
         <div id="news-grid" class="news-grid"></div>
       </article>
 
@@ -90,6 +91,10 @@
         <article class="brief-section onthisday-bottom">
           <h2>On This Day</h2>
           <p id="on-this-day">Loading fact...</p>
+          <div class="word-day-line">
+            <span class="word-day-label">Word</span>
+            <p id="word-of-day">Loading word...</p>
+          </div>
         </article>
 
         <article class="brief-section comic-card comic-bottom">
@@ -118,7 +123,10 @@
       const locationToggle = document.getElementById("location-toggle");
       const locationZipEl = document.getElementById("location-zip");
       const newsGridEl = document.getElementById("news-grid");
+      const newsCategoryBarEl = document.getElementById("news-category-bar");
+      const newsCategorySummaryEl = document.getElementById("news-category-summary");
       const onThisDayEl = document.getElementById("on-this-day");
+      const wordEl = document.getElementById("word-of-day");
       const comicTitleEl = document.getElementById("comic-title");
       const comicLinkEl = document.getElementById("comic-link");
       const comicImageEl = document.getElementById("comic-image");
@@ -135,6 +143,60 @@
       const marketSymbolsKey = "scout_daily_market_symbols";
       const marketSymbolsVersionKey = "scout_daily_market_symbols_version";
       const marketSymbolsVersion = "2";
+      const defaultWeatherLocation = { zip: "12210", label: "Albany, NY", lat: 42.6568, lon: -73.7605 };
+      const newsCategoryKey = "scout_daily_news_category";
+      const newsCategories = [
+        {
+          key: "top",
+          label: "Top News",
+          title: "Top Stories",
+          summary: "A blended feed from NPR and The New York Times.",
+          feeds: [
+            { source: "NPR", url: "https://feeds.npr.org/1001/rss.xml" },
+            { source: "NYTimes", url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" }
+          ]
+        },
+        {
+          key: "national",
+          label: "National",
+          title: "National Stories",
+          summary: "U.S. coverage from NPR and The New York Times.",
+          feeds: [
+            { source: "NPR", url: "https://feeds.npr.org/1003/rss.xml" },
+            { source: "NYTimes", url: "https://rss.nytimes.com/services/xml/rss/nyt/US.xml" }
+          ]
+        },
+        {
+          key: "international",
+          label: "International",
+          title: "International Stories",
+          summary: "World coverage from BBC News and NPR.",
+          feeds: [
+            { source: "BBC", url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
+            { source: "NPR", url: "https://feeds.npr.org/1004/rss.xml" }
+          ]
+        },
+        {
+          key: "sports",
+          label: "Sports",
+          title: "Sports Stories",
+          summary: "Sports coverage from ESPN and The New York Times.",
+          feeds: [
+            { source: "ESPN", url: "https://www.espn.com/espn/rss/news" },
+            { source: "NYTimes", url: "https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml" }
+          ]
+        },
+        {
+          key: "tech-business",
+          label: "Technology/Business",
+          title: "Technology & Business",
+          summary: "Business and technology coverage from TechCrunch and The New York Times.",
+          feeds: [
+            { source: "TechCrunch", url: "https://techcrunch.com/feed/" },
+            { source: "NYTimes", url: "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml" }
+          ]
+        }
+      ];
 
       dateEl.textContent = now.toLocaleDateString(undefined, {
         weekday: "long",
@@ -155,6 +217,19 @@
       function truncate(text, max) {
         const clean = safeText(text, "");
         return clean.length > max ? clean.slice(0, max - 1).trim() + "..." : clean;
+      }
+
+      function finiteNumber(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+      }
+
+      function firstFinite(values, fallback) {
+        for (let i = 0; i < values.length; i += 1) {
+          const number = finiteNumber(values[i]);
+          if (number !== null) return number;
+        }
+        return fallback;
       }
 
       function weatherCodeToText(code) {
@@ -190,16 +265,16 @@
 
       function moonPhaseSvg(idx) {
         const clipId = "moonclip-" + idx;
-        const base = '<circle cx="24" cy="24" r="15" fill="#1a1a1d"/>';
+        const base = '<circle cx="24" cy="24" r="15" fill="#18160f"/>';
         let lit = "";
-        if (idx === 1) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="18" cy="24" r="15" fill="#1a1a1d"/>';
-        else if (idx === 2) lit = '<clipPath id="' + clipId + '"><circle cx="24" cy="24" r="15"/></clipPath><rect x="24" y="9" width="15" height="30" fill="#e4e4e7" clip-path="url(#' + clipId + ')"/>';
-        else if (idx === 3) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="30" cy="24" r="15" fill="#1a1a1d"/>';
-        else if (idx === 4) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/>';
-        else if (idx === 5) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="18" cy="24" r="15" fill="#1a1a1d"/>';
-        else if (idx === 6) lit = '<clipPath id="' + clipId + '"><circle cx="24" cy="24" r="15"/></clipPath><rect x="9" y="9" width="15" height="30" fill="#e4e4e7" clip-path="url(#' + clipId + ')"/>';
-        else if (idx === 7) lit = '<circle cx="24" cy="24" r="15" fill="#e4e4e7"/><circle cx="30" cy="24" r="15" fill="#1a1a1d"/>';
-        return '<svg class="moon-icon" viewBox="0 0 48 48" role="img" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#141416"/>' + base + lit + '</svg>';
+        if (idx === 1) lit = '<circle cx="24" cy="24" r="15" fill="#f2ead9"/><circle cx="18" cy="24" r="15" fill="#18160f"/>';
+        else if (idx === 2) lit = '<clipPath id="' + clipId + '"><circle cx="24" cy="24" r="15"/></clipPath><rect x="24" y="9" width="15" height="30" fill="#f2ead9" clip-path="url(#' + clipId + ')"/>';
+        else if (idx === 3) lit = '<circle cx="24" cy="24" r="15" fill="#f2ead9"/><circle cx="30" cy="24" r="15" fill="#18160f"/>';
+        else if (idx === 4) lit = '<circle cx="24" cy="24" r="15" fill="#f2ead9"/>';
+        else if (idx === 5) lit = '<circle cx="24" cy="24" r="15" fill="#f2ead9"/><circle cx="18" cy="24" r="15" fill="#18160f"/>';
+        else if (idx === 6) lit = '<clipPath id="' + clipId + '"><circle cx="24" cy="24" r="15"/></clipPath><rect x="9" y="9" width="15" height="30" fill="#f2ead9" clip-path="url(#' + clipId + ')"/>';
+        else if (idx === 7) lit = '<circle cx="24" cy="24" r="15" fill="#f2ead9"/><circle cx="30" cy="24" r="15" fill="#18160f"/>';
+        return '<svg class="moon-icon" viewBox="0 0 48 48" role="img" aria-hidden="true"><rect width="48" height="48" rx="6" fill="#11100c"/>' + base + lit + '</svg>';
       }
 
       function nextFullMoonDate(moon, date) {
@@ -241,7 +316,7 @@
         const chartH = height - pad.top - pad.bottom;
 
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "#09090b";
+        ctx.fillStyle = "#080806";
         ctx.fillRect(0, 0, width, height);
 
         const temps = data.map(function (d) { return d.temp; });
@@ -252,7 +327,7 @@
         function yTemp(val) { return pad.top + ((tempMax - val) / tempRange) * chartH; }
         function yPrecip(val) { return pad.top + ((100 - val) / 100) * chartH; }
 
-        ctx.strokeStyle = "#27272a";
+        ctx.strokeStyle = "rgba(242, 234, 217, 0.12)";
         ctx.lineWidth = 1;
         for (let i = 0; i <= 4; i += 1) {
           const y = pad.top + (chartH * i) / 4;
@@ -305,22 +380,22 @@
           if (!show) return;
           const x = sampledWeather[idx].x;
           const y = yTemp(entry.temp) - 10;
-          ctx.fillStyle = "#a1a1aa";
+          ctx.fillStyle = "#cfc3ae";
           ctx.fillText(Math.round(entry.temp) + "\u00B0", x, y);
         });
 
         data.forEach(function (entry, idx) {
           const x = sampledWeather[idx].x;
           ctx.font = "24px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Inter, sans-serif";
-          ctx.fillStyle = "#71717a";
+          ctx.fillStyle = "#8f8779";
           ctx.fillText(weatherCodeToIcon(entry.code), x, height - 30);
           ctx.font = "600 14px Inter, system-ui, sans-serif";
-          ctx.fillStyle = "#a1a1aa";
+          ctx.fillStyle = "#cfc3ae";
           ctx.fillText(entry.label, x, height - 13);
         });
 
         ctx.textAlign = "left";
-        ctx.fillStyle = "#71717a";
+        ctx.fillStyle = "#8f8779";
         ctx.fillText(tempMax + "F", 4, pad.top + 8);
         ctx.fillText(tempMin + "F", 4, pad.top + chartH);
 
@@ -399,6 +474,7 @@
         const trimmed = zip.trim();
         if (!/^\d{5}$/.test(trimmed)) { weatherSummaryEl.textContent = "Enter a valid 5-digit ZIP code."; return false; }
 
+        let location = null;
         try {
           const zipRes = await fetch("https://api.zippopotam.us/us/" + encodeURIComponent(trimmed));
           if (!zipRes.ok) throw new Error("zip failed");
@@ -406,15 +482,27 @@
           const place = zipData.places && zipData.places[0];
           if (!place) throw new Error("zip missing");
 
-          const lat = Number(place.latitude);
-          const lon = Number(place.longitude);
-          const label = safeText(place["place name"], "Unknown City") + ", " + safeText(place["state abbreviation"], "");
-          await weatherByCoords(lat, lon, label);
+          location = {
+            zip: trimmed,
+            lat: Number(place.latitude),
+            lon: Number(place.longitude),
+            label: safeText(place["place name"], "Unknown City") + ", " + safeText(place["state abbreviation"], "")
+          };
+        } catch (_) {
+          if (trimmed !== defaultWeatherLocation.zip) {
+            weatherSummaryEl.textContent = "Could not find that ZIP code.";
+            return false;
+          }
+          location = defaultWeatherLocation;
+        }
+
+        try {
+          await weatherByCoords(location.lat, location.lon, location.label);
           locationZipEl.textContent = trimmed;
           zipInput.value = trimmed;
           return true;
         } catch (_) {
-          weatherSummaryEl.textContent = "Could not load weather for that ZIP.";
+          weatherSummaryEl.textContent = "Weather is unavailable right now for " + location.label + ".";
           return false;
         }
       }
@@ -428,28 +516,72 @@
         }
       }
 
-      async function loadNews() {
+      function getNewsCategory(key) {
+        return newsCategories.find(function (category) { return category.key === key; }) || newsCategories[0];
+      }
+
+      function activeNewsCategory() {
+        try {
+          return getNewsCategory(localStorage.getItem(newsCategoryKey) || "top");
+        } catch (_) {
+          return newsCategories[0];
+        }
+      }
+
+      function renderNewsCategoryBar(activeKey) {
+        newsCategoryBarEl.innerHTML = "";
+        newsCategories.forEach(function (category) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "news-category-button";
+          button.dataset.newsCategory = category.key;
+          button.textContent = category.label;
+          button.setAttribute("aria-pressed", String(category.key === activeKey));
+          newsCategoryBarEl.appendChild(button);
+        });
+      }
+
+      function parseNewsDate(value) {
+        const raw = safeText(value, "");
+        const direct = Date.parse(raw);
+        if (Number.isFinite(direct)) return direct;
+        const isoLike = Date.parse(raw.replace(" ", "T"));
+        return Number.isFinite(isoLike) ? isoLike : 0;
+      }
+
+      async function fetchNewsFeed(feed) {
+        const url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed.url);
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error("news failed");
+        const data = await response.json();
+        if (data.status !== "ok") throw new Error("news feed failed");
+
+        return (data.items || []).map(function (item) {
+          const published = safeText(item.pubDate, "");
+          return {
+            category: feed.source,
+            title: safeText(item.title, "Untitled"),
+            url: item.link,
+            image: item.thumbnail || (item.enclosure && item.enclosure.link),
+            summary: truncate(stripHtml(item.description || item.content), 170),
+            timestamp: parseNewsDate(published)
+          };
+        });
+      }
+
+      async function loadNews(categoryKey) {
+        const category = getNewsCategory(categoryKey);
         const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const heading = newsGridEl.closest(".brief-news-section").querySelector("h2");
+        if (heading) heading.textContent = category.title;
+        renderNewsCategoryBar(category.key);
+        newsCategorySummaryEl.textContent = category.summary;
+        newsGridEl.innerHTML = '<p class="brief-sub">Loading ' + category.label.toLowerCase() + '...</p>';
 
         try {
-          const feedUrl = "https://feeds.npr.org/1001/rss.xml";
-          const url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feedUrl);
-          const response = await fetch(url, { cache: "no-store" });
-          if (!response.ok) throw new Error("news failed");
-          const data = await response.json();
-          if (data.status !== "ok") throw new Error("news feed failed");
-
-          const sortedStories = (data.items || []).map(function (item) {
-            const published = safeText(item.pubDate, "");
-            return {
-              category: "NPR",
-              title: safeText(item.title, "Untitled"),
-              url: item.link,
-              image: item.thumbnail || (item.enclosure && item.enclosure.link),
-              summary: truncate(stripHtml(item.description), 170),
-              published: published,
-              timestamp: Date.parse(published.replace(" ", "T"))
-            };
+          const feedResults = await Promise.allSettled(category.feeds.map(fetchNewsFeed));
+          const sortedStories = feedResults.flatMap(function (result) {
+            return result.status === "fulfilled" ? result.value : [];
           }).sort(function (a, b) {
             return (b.timestamp || 0) - (a.timestamp || 0);
           });
@@ -503,7 +635,7 @@
             newsGridEl.appendChild(card);
           });
         } catch (_) {
-          newsGridEl.innerHTML = "<p>News is unavailable right now. Please refresh shortly.</p>";
+          newsGridEl.innerHTML = '<p class="brief-sub">News is unavailable for ' + category.label.toLowerCase() + ' right now. Try another category.</p>';
         }
       }
       function setOnThisDay(year, text) {
@@ -548,6 +680,33 @@
         setOnThisDay("On this day", "notable world events occurred across politics, science, and culture. Source feeds are temporarily unavailable.");
       }
 
+      function renderWordOfDay() {
+        const words = [
+          { word: "lucent", definition: "glowing with clear light." },
+          { word: "tacit", definition: "understood without being directly stated." },
+          { word: "liminal", definition: "at a threshold between one state and another." },
+          { word: "exact", definition: "careful, precise, and unsparing about details." },
+          { word: "kinetic", definition: "full of movement or active energy." },
+          { word: "oblique", definition: "indirect, angled, or not immediately obvious." },
+          { word: "salient", definition: "most noticeable or worth paying attention to." },
+          { word: "lucid", definition: "clear, intelligible, and easy to grasp." },
+          { word: "ambient", definition: "existing quietly in the surrounding atmosphere." },
+          { word: "spare", definition: "restrained, economical, and free of excess." },
+          { word: "volatile", definition: "liable to change quickly and unpredictably." },
+          { word: "coherent", definition: "ordered in a way that feels connected and whole." },
+          { word: "latent", definition: "present but not yet visible or fully active." },
+          { word: "signal", definition: "meaningful information separated from background noise." }
+        ];
+        const pick = words[Math.floor(now.getTime() / 86400000) % words.length];
+        wordEl.innerHTML = "";
+        const wordStrong = document.createElement("strong");
+        wordStrong.textContent = pick.word + ": ";
+        const detail = document.createElement("span");
+        detail.textContent = pick.definition;
+        wordEl.appendChild(wordStrong);
+        wordEl.appendChild(detail);
+      }
+
       function formatSigned(value) {
         return (value > 0 ? "+" : "") + value.toFixed(2);
       }
@@ -570,7 +729,7 @@
           return x.toFixed(1) + "," + y.toFixed(1);
         }).join(" ");
 
-        const stroke = tone === "up" ? "#4ade80" : (tone === "down" ? "#f87171" : "#71717a");
+        const stroke = tone === "up" ? "#34d399" : (tone === "down" ? "#fb7185" : "#8f8779");
         return '<svg class="market-spark" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + coords + '" fill="none" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round"/></svg>';
       }
 
@@ -601,8 +760,9 @@
         const points = closes.filter(function (v) { return Number.isFinite(v); });
         if (!points.length) return null;
 
-        const price = points[points.length - 1];
-        const prev = Number(meta.chartPreviousClose || meta.previousClose || points[0]);
+        const price = firstFinite([meta.regularMarketPrice, points[points.length - 1]], points[points.length - 1]);
+        const prev = firstFinite([meta.regularMarketPreviousClose, meta.previousClose, meta.chartPreviousClose, points[0]], points[0]);
+        if (!Number.isFinite(price) || !Number.isFinite(prev)) return null;
         const change = price - prev;
         const pct = prev ? (change / prev) * 100 : 0;
         const tone = change > 0 ? "up" : (change < 0 ? "down" : "flat");
@@ -750,11 +910,22 @@
         setMarketSymbols(getMarketSymbols().filter(function (item) { return item !== symbol; }));
       });
 
+      newsCategoryBarEl.addEventListener("click", function (event) {
+        const button = event.target.closest(".news-category-button");
+        if (!button) return;
+        const categoryKey = button.dataset.newsCategory;
+        try {
+          localStorage.setItem(newsCategoryKey, categoryKey);
+        } catch (_) {}
+        loadNews(categoryKey);
+      });
+
       bindWeatherTooltip();
       renderMoon();
       loadWeatherFromZip(zipInput.value || "12210");
-      loadNews();
+      loadNews(activeNewsCategory().key);
       loadOnThisDay();
+      renderWordOfDay();
       loadMarkets();
       loadComic();
     })();

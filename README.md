@@ -18,6 +18,7 @@ Static website hosted on GitHub Pages.
 - 24-hour weather chart (temperature, conditions, precipitation)
 - Top stories feed
 - On This Day fact
+- Curated Word of the Day
 - XKCD daily comic
 - Market Snapshot (VOO, QQQM, NKE, RKLB) with 1D change and Yahoo Finance detail links
 

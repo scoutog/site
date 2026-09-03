@@ -39,6 +39,22 @@ const app = {
   zoneSettings: config.defaultHeartRateZones || []
 };
 
+const chartColors = {
+  text: "#f2ead9",
+  muted: "#8f8779",
+  grid: "rgba(242,234,217,.12)",
+  amber: "#d99a2b",
+  cyan: "#38bdf8",
+  green: "#34d399",
+  red: "#fb7185",
+  orange: "#f97316",
+  yellow: "#eab308",
+  lime: "#84cc16",
+  softAmber: "rgba(217,154,43,.18)",
+  softGreen: "rgba(52,211,153,.18)",
+  softRed: "rgba(251,113,133,.18)"
+};
+
 const els = {};
 
 document.addEventListener("DOMContentLoaded", init);
@@ -490,51 +506,51 @@ function renderCharts(workouts) {
   const oneMinuteRecovery = workouts.map((workout) => recoveryDrop(workout.id, 1));
   const twoMinuteRecovery = workouts.map((workout) => recoveryDrop(workout.id, 2));
 
-  drawChart("pace-chart", "line", labels, [{ label: `Pace min/${app.unit}`, data: selectedPace, borderColor: "#818cf8", backgroundColor: "rgba(129,140,248,.18)", tension: 0.25 }], chartOptions({ y: paddedScale(selectedPace, { minSpan: 3, tickPrecision: 1 }) }));
-  drawChart("hr-chart", "line", labels, [{ label: "Average HR BPM", data: selectedHr, borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,.18)", tension: 0.25 }], chartOptions({ y: paddedScale(selectedHr, { minSpan: 40, tickPrecision: 0 }) }));
+  drawChart("pace-chart", "line", labels, [{ label: `Pace min/${app.unit}`, data: selectedPace, borderColor: chartColors.amber, backgroundColor: chartColors.softAmber, tension: 0.25 }], chartOptions({ y: paddedScale(selectedPace, { minSpan: 3, tickPrecision: 1 }) }));
+  drawChart("hr-chart", "line", labels, [{ label: "Average HR BPM", data: selectedHr, borderColor: chartColors.green, backgroundColor: chartColors.softGreen, tension: 0.25 }], chartOptions({ y: paddedScale(selectedHr, { minSpan: 40, tickPrecision: 0 }) }));
   drawChart("pace-hr-chart", "line", labels, [
-    { label: `Pace min/${app.unit}`, data: pace, borderColor: "#818cf8", yAxisID: "y" },
-    { label: "Average HR BPM", data: hr, borderColor: "#22c55e", yAxisID: "y1" }
+    { label: `Pace min/${app.unit}`, data: pace, borderColor: chartColors.amber, yAxisID: "y" },
+    { label: "Average HR BPM", data: hr, borderColor: chartColors.green, yAxisID: "y1" }
   ], chartOptions({
     y: paddedScale(pace, { minSpan: 3, tickPrecision: 1 }),
     y1: paddedScale(hr, { minSpan: 40, position: "right", drawGrid: false, tickPrecision: 0 })
   }));
   drawChart("rolling-chart", "line", labels, [
-    { label: `3-workout pace min/${app.unit}`, data: rolled.map((row) => row.pace_value_rolling_3), borderColor: "#a78bfa", yAxisID: "y" },
-    { label: "3-workout HR", data: rolled.map((row) => roundedNumberOrNull(row.hr_value_rolling_3)), borderColor: "#34d399", yAxisID: "y1" }
+    { label: `3-workout pace min/${app.unit}`, data: rolled.map((row) => row.pace_value_rolling_3), borderColor: chartColors.cyan, yAxisID: "y" },
+    { label: "3-workout HR", data: rolled.map((row) => roundedNumberOrNull(row.hr_value_rolling_3)), borderColor: chartColors.green, yAxisID: "y1" }
   ], chartOptions({
     y: paddedScale(rolled.map((row) => row.pace_value_rolling_3), { minSpan: 3, tickPrecision: 1 }),
     y1: paddedScale(rolled.map((row) => roundedNumberOrNull(row.hr_value_rolling_3)), { minSpan: 40, position: "right", drawGrid: false, tickPrecision: 0 })
   }));
-  drawChart("weekly-count-chart", "bar", weeklyLabels, [{ label: "Qualifying runs", data: weekly.map((week) => week.count), backgroundColor: "#818cf8" }], chartBase);
-  drawChart("weekly-distance-chart", "bar", weeklyLabels, [{ label: `Distance ${app.unit}`, data: weekly.map((week) => app.unit === "km" ? week.distance_meters / 1000 : week.distance_meters / 1609.344), backgroundColor: "#38bdf8" }], chartBase);
-  drawChart("weekly-duration-chart", "bar", weeklyLabels, [{ label: "Duration minutes", data: weekly.map((week) => week.duration_seconds / 60), backgroundColor: "#f59e0b" }], chartBase);
+  drawChart("weekly-count-chart", "bar", weeklyLabels, [{ label: "Qualifying runs", data: weekly.map((week) => week.count), backgroundColor: chartColors.amber }], chartBase);
+  drawChart("weekly-distance-chart", "bar", weeklyLabels, [{ label: `Distance ${app.unit}`, data: weekly.map((week) => app.unit === "km" ? week.distance_meters / 1000 : week.distance_meters / 1609.344), backgroundColor: chartColors.cyan }], chartBase);
+  drawChart("weekly-duration-chart", "bar", weeklyLabels, [{ label: "Duration minutes", data: weekly.map((week) => week.duration_seconds / 60), backgroundColor: chartColors.orange }], chartBase);
   drawZoneDistribution(workouts);
-  drawChart("zone5-chart", "line", labels, [{ label: "Zone 5 percentage", data: workouts.map((workout) => zonePercent(workout.id, 5)), borderColor: "#f43f5e", backgroundColor: "rgba(244,63,94,.18)" }], chartBase);
+  drawChart("zone5-chart", "line", labels, [{ label: "Zone 5 percentage", data: workouts.map((workout) => zonePercent(workout.id, 5)), borderColor: chartColors.red, backgroundColor: chartColors.softRed }], chartBase);
   drawChart("run-walk-chart", "bar", labels, [
-    { label: "Work minutes", data: workouts.map((workout) => intervalSummary(app.intervals[workout.id] || []).workSeconds / 60 || null), backgroundColor: "#22c55e" },
-    { label: "Recovery minutes", data: workouts.map((workout) => intervalSummary(app.intervals[workout.id] || []).recoverySeconds / 60 || null), backgroundColor: "#71717a" }
-  ], { ...chartBase, scales: { x: { stacked: true, ticks: { color: "#a1a1aa", maxRotation: 0 }, grid: { color: "#27272a" } }, y: { stacked: true, ticks: { color: "#a1a1aa" }, grid: { color: "#27272a" } } } });
+    { label: "Work minutes", data: workouts.map((workout) => intervalSummary(app.intervals[workout.id] || []).workSeconds / 60 || null), backgroundColor: chartColors.green },
+    { label: "Recovery minutes", data: workouts.map((workout) => intervalSummary(app.intervals[workout.id] || []).recoverySeconds / 60 || null), backgroundColor: chartColors.muted }
+  ], { ...chartBase, scales: { x: { stacked: true, ticks: { color: chartColors.muted, maxRotation: 0 }, grid: { color: chartColors.grid } }, y: { stacked: true, ticks: { color: chartColors.muted }, grid: { color: chartColors.grid } } } });
   const workPace = workouts.map(workIntervalPace);
-  drawChart("work-pace-chart", "line", labels, [{ label: `Work interval pace min/${app.unit}`, data: workPace, borderColor: "#c084fc" }], chartOptions({ y: paddedScale(workPace, { minSpan: 3, tickPrecision: 1 }) }));
+  drawChart("work-pace-chart", "line", labels, [{ label: `Work interval pace min/${app.unit}`, data: workPace, borderColor: chartColors.amber }], chartOptions({ y: paddedScale(workPace, { minSpan: 3, tickPrecision: 1 }) }));
   drawChart("work-recovery-hr-chart", "bar", labels, [
-    { label: "Work HR", data: workHr, backgroundColor: "#22c55e" },
-    { label: "Recovery HR", data: recoveryHr, backgroundColor: "#60a5fa" }
+    { label: "Work HR", data: workHr, backgroundColor: chartColors.green },
+    { label: "Recovery HR", data: recoveryHr, backgroundColor: chartColors.cyan }
   ], chartOptions({ y: paddedScale([...workHr, ...recoveryHr], { minSpan: 40, tickPrecision: 0 }) }));
   const scatterPoints = workouts.map((workout) => ({ x: paceMinutes(workout), y: roundedNumberOrNull(workout.average_heart_rate_bpm) })).filter((point) => point.x && point.y);
-  drawChart("scatter-chart", "scatter", labels, [{ label: `Pace min/${app.unit} vs HR`, data: scatterPoints, backgroundColor: "#f97316" }], chartOptions({
+  drawChart("scatter-chart", "scatter", labels, [{ label: `Pace min/${app.unit} vs HR`, data: scatterPoints, backgroundColor: chartColors.orange }], chartOptions({
     x: paddedScale(scatterPoints.map((point) => point.x), { minSpan: 3, tickPrecision: 1 }),
     y: paddedScale(scatterPoints.map((point) => point.y), { minSpan: 40, tickPrecision: 0 })
   }));
   drawChart("recovery-chart", "line", labels, [
-    { label: "1-minute HR drop", data: oneMinuteRecovery, borderColor: "#eab308" },
-    { label: "2-minute HR drop", data: twoMinuteRecovery, borderColor: "#84cc16" }
+    { label: "1-minute HR drop", data: oneMinuteRecovery, borderColor: chartColors.yellow },
+    { label: "2-minute HR drop", data: twoMinuteRecovery, borderColor: chartColors.lime }
   ], chartOptions({ y: paddedScale([...oneMinuteRecovery, ...twoMinuteRecovery], { minSpan: 20, suggestedMin: 0, tickPrecision: 0 }) }));
 }
 
 function drawZoneDistribution(workouts) {
   const labels = workouts.map((workout) => formatDate(workout.started_at));
-  const colors = ["#60a5fa", "#22c55e", "#eab308", "#f97316", "#f43f5e"];
+  const colors = [chartColors.cyan, chartColors.green, chartColors.yellow, chartColors.orange, chartColors.red];
   const datasets = [1, 2, 3, 4, 5].map((zoneNumber, index) => ({
     label: `Zone ${zoneNumber}`,
     data: workouts.map((workout) => zonePercent(workout.id, zoneNumber)),
@@ -558,7 +574,7 @@ function chartOptions(scales = {}) {
   return {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { labels: { color: "#d4d4d8" } } },
+    plugins: { legend: { labels: { color: chartColors.text } } },
     scales: chartScales(scales)
   };
 }
@@ -578,8 +594,8 @@ function axisScale(options = {}) {
   const { drawGrid = true, tickPrecision, maxRotation, ...rest } = options || {};
   return {
     ...rest,
-    ticks: { color: "#a1a1aa", precision: tickPrecision, maxRotation, ...(rest.ticks || {}) },
-    grid: { color: "#27272a", drawOnChartArea: drawGrid, ...(rest.grid || {}) }
+    ticks: { color: chartColors.muted, precision: tickPrecision, maxRotation, ...(rest.ticks || {}) },
+    grid: { color: chartColors.grid, drawOnChartArea: drawGrid, ...(rest.grid || {}) }
   };
 }
 
@@ -614,7 +630,7 @@ function renderWorkoutDetailCharts(workout, intervals) {
     .slice()
     .sort((a, b) => Number(a.interval_number) - Number(b.interval_number));
   const labels = rows.map((row) => String(row.interval_number));
-  const colors = rows.map((row) => row.interval_type === "work" ? "#22c55e" : row.interval_type === "recovery" ? "#71717a" : "#818cf8");
+  const colors = rows.map((row) => row.interval_type === "work" ? chartColors.green : row.interval_type === "recovery" ? chartColors.muted : chartColors.amber);
   drawChart("detail-interval-chart", "bar", labels, [
     {
       label: `Distance ${app.unit}`,
@@ -625,8 +641,8 @@ function renderWorkoutDetailCharts(workout, intervals) {
     {
       label: "Avg HR",
       data: rows.map((row) => roundedNumberOrNull(row.average_heart_rate_bpm)),
-      borderColor: "#f43f5e",
-      backgroundColor: "#f43f5e",
+      borderColor: chartColors.red,
+      backgroundColor: chartColors.red,
       type: "line",
       yAxisID: "y1",
       tension: 0.2
