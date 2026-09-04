@@ -935,13 +935,10 @@ async function sendCoachMessage(event) {
   renderCoachMessages();
   setCoachStatus("Thinking...");
   try {
-    const { data, error } = await app.supabase.functions.invoke("running-coach", {
-      headers: await coachAuthHeaders(),
-      body: {
-        message,
-        workoutId: app.coachWorkoutId,
-        scope: app.coachWorkoutId ? "workout" : "dashboard"
-      }
+    const { data, error } = await invokeCoach({
+      message,
+      workoutId: app.coachWorkoutId,
+      scope: app.coachWorkoutId ? "workout" : "dashboard"
     });
     if (error || data?.error || !data?.answer) throw new Error("coach_unavailable");
     app.coachMessages.push({ role: "assistant", content: data.answer, workout_id: app.coachWorkoutId, scope: app.coachWorkoutId ? "workout" : "dashboard" });
@@ -963,10 +960,7 @@ async function clearCoachHistory() {
   renderCoachMessages();
   setCoachStatus("Clearing...");
   try {
-    const { data, error } = await app.supabase.functions.invoke("running-coach", {
-      headers: await coachAuthHeaders(),
-      body: { action: "clear" }
-    });
+    const { data, error } = await invokeCoach({ action: "clear" });
     if (error || data?.error) throw new Error("coach_clear_failed");
     setCoachStatus("Coach history cleared.");
   } catch (_error) {
@@ -991,7 +985,21 @@ async function coachAuthHeaders() {
   const { data } = await app.supabase.auth.getSession();
   app.session = data?.session || app.session;
   app.user = app.session?.user || app.user;
-  return app.session?.access_token ? { Authorization: `Bearer ${app.session.access_token}` } : {};
+  return app.session?.access_token ? {
+    authorization: `Bearer ${app.session.access_token}`,
+    apikey: config.supabaseAnonKey,
+    "content-type": "application/json"
+  } : {};
+}
+
+async function invokeCoach(body) {
+  const response = await fetch(`${config.supabaseUrl}/functions/v1/running-coach`, {
+    method: "POST",
+    headers: await coachAuthHeaders(),
+    body: JSON.stringify(body)
+  });
+  const data = await response.json().catch(() => null);
+  return { data, error: response.ok ? null : data?.error || "Coach is unavailable right now." };
 }
 
 function authStorageKey() {
