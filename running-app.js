@@ -989,9 +989,8 @@ async function coachAuthHeaders() {
   app.user = app.session?.user || app.user;
   if (!app.session?.access_token) throw new Error("missing_session");
   return {
-    authorization: `Bearer ${config.supabaseAnonKey}`,
+    authorization: `Bearer ${app.session.access_token}`,
     apikey: config.supabaseAnonKey,
-    "x-running-access-token": app.session.access_token,
     "content-type": "application/json"
   };
 }
