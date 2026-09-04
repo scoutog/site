@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { buildCoachContext } from "../supabase/functions/running-coach/coach-context.js";
-import { createCoachHandler, extractResponseText, parseJwtClaims } from "../supabase/functions/running-coach/handler.js";
+import { createCoachHandler, createOpenAIResponder, extractResponseText, modelCandidates, parseJwtClaims } from "../supabase/functions/running-coach/handler.js";
 
 const userId = "0a9fd9fe-1514-4349-8ac1-797f239b22c3";
 const workoutId = "11111111-1111-4111-8111-111111111111";
@@ -160,6 +160,29 @@ test("running coach returns a generic error when the model fails", async () => {
   const response = await authedCoachRequest(handler, { message: "What changed?" });
   assert.equal(response.status, 500);
   assert.deepEqual(await response.json(), { error: "Coach is unavailable right now.", code: "unexpected_error" });
+});
+
+test("OpenAI responder falls back when configured model is denied", async () => {
+  const triedModels = [];
+  const responder = createOpenAIResponder(async (_url, init) => {
+    const body = JSON.parse(init.body);
+    triedModels.push(body.model);
+    if (body.model === "gpt-5.6-terra") {
+      return new Response(JSON.stringify({ error: "denied" }), { status: 403 });
+    }
+    return new Response(JSON.stringify({ output_text: "Fallback model answered." }), { status: 200 });
+  });
+  const answer = await responder({
+    env: { OPENAI_API_KEY: "test-key", OPENAI_MODEL: "gpt-5.6-terra" },
+    question: "What changed?",
+    context: { recentWorkouts: [] }
+  });
+  assert.equal(answer, "Fallback model answered.");
+  assert.deepEqual(triedModels, ["gpt-5.6-terra", "gpt-5-mini"]);
+});
+
+test("model fallback candidates are deduplicated", () => {
+  assert.deepEqual(modelCandidates("gpt-5-mini"), ["gpt-5-mini", "gpt-4.1-mini"]);
 });
 
 test("extracts text from OpenAI Responses API shapes", () => {

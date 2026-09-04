@@ -159,11 +159,11 @@ The AI coach is private server-side functionality. Add these as Supabase Edge Fu
 
 ```sh
 supabase secrets set OPENAI_API_KEY='YOUR_SERVER_SIDE_OPENAI_API_KEY'
-supabase secrets set OPENAI_MODEL='gpt-4.1-mini'
+supabase secrets set OPENAI_MODEL='gpt-5.6-terra'
 supabase functions deploy running-coach
 ```
 
-`OPENAI_MODEL` is optional; if unset, the function uses `gpt-5.6-terra`. The OpenAI key must never appear in `running-config.js`, `running.html`, `running-app.js`, or any production frontend asset.
+`OPENAI_MODEL` is optional; if unset, the function uses `gpt-5.6-terra`. If the configured model is denied or unavailable, the function tries `gpt-5-mini` and then `gpt-4.1-mini` before returning a generic coach error. The OpenAI key must never appear in `running-config.js`, `running.html`, `running-app.js`, or any production frontend asset.
 
 The coach sends OpenAI compact derived workout summaries, recent interval trends, selected workout detail when requested, and recent coach conversation memory. It does not send `raw_imports.payload`, GPS/routes, ingestion tokens, passwords, authorization headers, or service-role keys.
 

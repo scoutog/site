@@ -191,29 +191,48 @@ async function loadCoachData(supabase, userId) {
 async function askOpenAI(question, context) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) throw new Error("openai_not_configured");
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({
-      model: Deno.env.get("OPENAI_MODEL") || "gpt-5.6-terra",
-      instructions: [
-        "You are a running coach for one private dashboard.",
-        "Use the supplied workout summaries and prior coach conversation only.",
-        "Prioritize consistency, cardiovascular efficiency, sustainable interval progress, and lower excessive high-intensity time over fastest pace.",
-        "Frame observations as training trends. Do not provide medical advice, diagnoses, or treatment recommendations.",
-        "If data is missing or insufficient, say that plainly. Do not invent workout data.",
-        "Keep responses concise, practical, and specific to the numbers in context."
-      ].join(" "),
-      input: `Question: ${question}\n\nPrivate dashboard context JSON:\n${JSON.stringify(context)}`,
-      max_output_tokens: 650
-    })
-  });
-  if (!response.ok) throw new Error(`openai_request_failed_${response.status}`);
-  const data = await response.json();
-  return extractResponseText(data);
+  let lastStatus = 500;
+  for (const model of modelCandidates(Deno.env.get("OPENAI_MODEL"))) {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(openAIRequestBody({ model, question, context }))
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return extractResponseText(data);
+    }
+    lastStatus = response.status;
+    if (![400, 403, 404].includes(response.status)) break;
+  }
+  throw new Error(`openai_request_failed_${lastStatus}`);
+}
+
+function modelCandidates(primaryModel) {
+  return [...new Set([
+    primaryModel || "gpt-5.6-terra",
+    "gpt-5-mini",
+    "gpt-4.1-mini"
+  ].filter(Boolean))];
+}
+
+function openAIRequestBody({ model, question, context }) {
+  return {
+    model,
+    instructions: [
+      "You are a running coach for one private dashboard.",
+      "Use the supplied workout summaries and prior coach conversation only.",
+      "Prioritize consistency, cardiovascular efficiency, sustainable interval progress, and lower excessive high-intensity time over fastest pace.",
+      "Frame observations as training trends. Do not provide medical advice, diagnoses, or treatment recommendations.",
+      "If data is missing or insufficient, say that plainly. Do not invent workout data.",
+      "Keep responses concise, practical, and specific to the numbers in context."
+    ].join(" "),
+    input: `Question: ${question}\n\nPrivate dashboard context JSON:\n${JSON.stringify(context)}`,
+    max_output_tokens: 650
+  };
 }
 
 function buildCoachContext({
