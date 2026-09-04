@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { buildCoachContext } from "../supabase/functions/running-coach/coach-context.js";
-import { createCoachHandler, extractResponseText } from "../supabase/functions/running-coach/handler.js";
+import { createCoachHandler, extractResponseText, parseJwtClaims } from "../supabase/functions/running-coach/handler.js";
 
 const userId = "0a9fd9fe-1514-4349-8ac1-797f239b22c3";
 const workoutId = "11111111-1111-4111-8111-111111111111";
@@ -43,7 +43,7 @@ test("running coach migration enables RLS ownership policies", async () => {
 
 test("running coach rejects unauthenticated requests", async () => {
   const handler = createCoachHandler({
-    env: {},
+    env: { SUPABASE_URL: "https://example.supabase.co" },
     supabaseFactory: () => fakeSupabase(),
     openAIResponder: async () => "unused"
   });
@@ -60,7 +60,7 @@ test("running coach rejects another user's workout id", async () => {
   let called = false;
   const state = sampleState();
   const handler = createCoachHandler({
-    env: {},
+    env: { SUPABASE_URL: "https://example.supabase.co" },
     supabaseFactory: () => fakeSupabase(state),
     openAIResponder: async () => {
       called = true;
@@ -74,14 +74,14 @@ test("running coach rejects another user's workout id", async () => {
 
 test("running coach rejects malformed JSON with a generic error", async () => {
   const handler = createCoachHandler({
-    env: {},
+    env: { SUPABASE_URL: "https://example.supabase.co" },
     supabaseFactory: () => fakeSupabase(),
     openAIResponder: async () => "unused"
   });
   const response = await handler(new Request("https://example.com", {
     method: "POST",
     headers: {
-      authorization: "Bearer header.payload.signature",
+      authorization: `Bearer ${fakeJwt()}`,
       "content-type": "application/json"
     },
     body: "{"
@@ -93,8 +93,9 @@ test("running coach rejects malformed JSON with a generic error", async () => {
 test("running coach accepts session token from custom header", async () => {
   let forwardedAuthorization = "";
   let getUserToken = "";
+  const jwt = fakeJwt();
   const handler = createCoachHandler({
-    env: {},
+    env: { SUPABASE_URL: "https://example.supabase.co" },
     supabaseFactory: (authorization) => {
       forwardedAuthorization = authorization;
       return fakeSupabase(sampleState(), {
@@ -110,20 +111,20 @@ test("running coach accepts session token from custom header", async () => {
     headers: {
       authorization: "Bearer publishable-key",
       apikey: "publishable-key",
-      "x-running-access-token": "header.payload.signature",
+      "x-running-access-token": jwt,
       "content-type": "application/json"
     },
     body: JSON.stringify({ message: "What should I watch?" })
   }));
   assert.equal(response.status, 200);
-  assert.equal(forwardedAuthorization, "Bearer header.payload.signature");
-  assert.equal(getUserToken, "header.payload.signature");
+  assert.equal(forwardedAuthorization, `Bearer ${jwt}`);
+  assert.equal(getUserToken, "");
 });
 
 test("running coach stores user and assistant messages", async () => {
   const state = sampleState();
   const handler = createCoachHandler({
-    env: {},
+    env: { SUPABASE_URL: "https://example.supabase.co" },
     supabaseFactory: () => fakeSupabase(state),
     openAIResponder: async ({ context }) => {
       assert.equal(context.selectedWorkout.id, workoutId);
@@ -140,10 +141,17 @@ test("running coach stores user and assistant messages", async () => {
   assert.equal(state.coach_memory.length, 1);
 });
 
+test("parses Supabase JWT claims without exposing token contents", () => {
+  const claims = parseJwtClaims(fakeJwt(), "https://example.supabase.co");
+  assert.equal(claims.sub, userId);
+  assert.equal(claims.role, "authenticated");
+  assert.equal(parseJwtClaims("not-a-jwt", "https://example.supabase.co"), null);
+});
+
 test("running coach returns a generic error when the model fails", async () => {
   const state = sampleState();
   const handler = createCoachHandler({
-    env: {},
+    env: { SUPABASE_URL: "https://example.supabase.co" },
     supabaseFactory: () => fakeSupabase(state),
     openAIResponder: async () => {
       throw new Error("model exploded with details");
@@ -163,7 +171,7 @@ async function authedCoachRequest(handler, body) {
   return handler(new Request("https://example.com", {
     method: "POST",
     headers: {
-      authorization: "Bearer header.payload.signature",
+      authorization: `Bearer ${fakeJwt()}`,
       "content-type": "application/json"
     },
     body: JSON.stringify(body)
@@ -215,6 +223,21 @@ function sampleState() {
     coach_messages: [],
     coach_memory: []
   };
+}
+
+function fakeJwt() {
+  const header = base64Url(JSON.stringify({ alg: "ES256", typ: "JWT" }));
+  const payload = base64Url(JSON.stringify({
+    sub: userId,
+    role: "authenticated",
+    iss: "https://example.supabase.co/auth/v1",
+    exp: Math.floor(Date.now() / 1000) + 3600
+  }));
+  return `${header}.${payload}.signature`;
+}
+
+function base64Url(value) {
+  return Buffer.from(value).toString("base64url");
 }
 
 function fakeSupabase(state = sampleState(), hooks = {}) {

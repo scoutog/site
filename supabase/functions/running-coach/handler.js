@@ -29,6 +29,10 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       if (!userAuthorization.match(/^Bearer\s+[-_A-Za-z0-9.]+$/)) {
         return json({ error: GENERIC_ERROR, code: "auth_missing_or_invalid_token" }, 401);
       }
+      const claims = parseJwtClaims(userToken, env.SUPABASE_URL);
+      if (!claims?.sub) {
+        return json({ error: GENERIC_ERROR, code: "auth_session_not_verified" }, 401);
+      }
 
       const contentType = request.headers.get("content-type") || "";
       if (!contentType.toLowerCase().includes("application/json")) {
@@ -53,13 +57,12 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       }
 
       const supabase = supabaseFactory(userAuthorization);
-      const { data: userData, error: userError } = await supabase.auth.getUser(userToken);
-      const user = userData?.user;
-      if (userError || !user?.id) {
-        return json({ error: GENERIC_ERROR, code: "auth_session_not_verified" }, 401);
-      }
+      const user = { id: claims.sub };
 
       const privateUser = await single(supabase.from("running_private_users").select("id").eq("id", user.id));
+      if (privateUser.error) {
+        return json({ error: GENERIC_ERROR, code: "auth_rls_rejected" }, 401);
+      }
       if (!privateUser.data) {
         return json({ error: GENERIC_ERROR, code: "auth_user_not_allowed" }, 403);
       }
@@ -241,6 +244,27 @@ function safeErrorCode(error) {
   const message = String(error?.message || "unknown_error").toLowerCase();
   const match = message.match(/^[a-z0-9_:-]{1,80}$/);
   return match ? match[0] : "unexpected_error";
+}
+
+export function parseJwtClaims(token, supabaseUrl = "") {
+  try {
+    const payloadPart = String(token || "").split(".")[1];
+    if (!payloadPart) return null;
+    const payload = JSON.parse(base64UrlDecode(payloadPart));
+    if (!payload.sub || !String(payload.sub).match(/^[0-9a-f-]{36}$/i)) return null;
+    if (payload.exp && Number(payload.exp) * 1000 <= Date.now()) return null;
+    const expectedIssuer = supabaseUrl ? `${String(supabaseUrl).replace(/\/$/, "")}/auth/v1` : "";
+    if (expectedIssuer && payload.iss && payload.iss !== expectedIssuer) return null;
+    return payload;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function base64UrlDecode(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - normalized.length % 4) % 4), "=");
+  return atob(padded);
 }
 
 function json(body, status = 200) {
