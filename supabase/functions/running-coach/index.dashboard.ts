@@ -191,7 +191,7 @@ async function loadCoachData(supabase, userId) {
 async function askOpenAI(question, context) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) throw new Error("openai_not_configured");
-  let lastStatus = 500;
+  let lastCode = "openai_request_failed_500";
   for (const model of modelCandidates(Deno.env.get("OPENAI_MODEL"))) {
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -205,10 +205,13 @@ async function askOpenAI(question, context) {
       const data = await response.json();
       return extractResponseText(data);
     }
-    lastStatus = response.status;
+    const openAIErrorCode = await safeOpenAIErrorCode(response);
+    lastCode = openAIErrorCode
+      ? `openai_${response.status}_${openAIErrorCode}`
+      : `openai_request_failed_${response.status}`;
     if (![400, 403, 404].includes(response.status)) break;
   }
-  throw new Error(`openai_request_failed_${lastStatus}`);
+  throw new Error(lastCode);
 }
 
 function modelCandidates(primaryModel) {
@@ -556,6 +559,23 @@ function base64UrlDecode(value) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(normalized.length + ((4 - normalized.length % 4) % 4), "=");
   return atob(padded);
+}
+
+async function safeOpenAIErrorCode(response) {
+  try {
+    const data = await response.json();
+    const raw = data?.error?.code || data?.error?.type || data?.code || data?.type || "";
+    return sanitizeErrorToken(raw);
+  } catch (_error) {
+    return "";
+  }
+}
+
+function sanitizeErrorToken(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_:-]/g, "_")
+    .slice(0, 80);
 }
 
 function safeErrorCode(error) {

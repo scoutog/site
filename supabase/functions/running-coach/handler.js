@@ -192,7 +192,7 @@ async function rememberConversation(supabase, userId, memory, priorMessages, que
 export function createOpenAIResponder(fetchImpl = fetch) {
   return async function respondWithOpenAI({ env, question, context }) {
     if (!env.OPENAI_API_KEY) throw new Error("openai_not_configured");
-    let lastStatus = 500;
+    let lastCode = "openai_request_failed_500";
     for (const model of modelCandidates(env.OPENAI_MODEL)) {
       const response = await fetchImpl("https://api.openai.com/v1/responses", {
         method: "POST",
@@ -206,10 +206,13 @@ export function createOpenAIResponder(fetchImpl = fetch) {
         const data = await response.json();
         return extractResponseText(data);
       }
-      lastStatus = response.status;
+      const openAIErrorCode = await safeOpenAIErrorCode(response);
+      lastCode = openAIErrorCode
+        ? `openai_${response.status}_${openAIErrorCode}`
+        : `openai_request_failed_${response.status}`;
       if (![400, 403, 404].includes(response.status)) break;
     }
-    throw new Error(`openai_request_failed_${lastStatus}`);
+    throw new Error(lastCode);
   };
 }
 
@@ -258,6 +261,23 @@ async function single(query) {
 function truncate(value, length) {
   const text = String(value || "").trim();
   return text.length > length ? `${text.slice(0, length - 1)}...` : text;
+}
+
+async function safeOpenAIErrorCode(response) {
+  try {
+    const data = await response.json();
+    const raw = data?.error?.code || data?.error?.type || data?.code || data?.type || "";
+    return sanitizeErrorToken(raw);
+  } catch (_error) {
+    return "";
+  }
+}
+
+function sanitizeErrorToken(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_:-]/g, "_")
+    .slice(0, 80);
 }
 
 function safeErrorCode(error) {

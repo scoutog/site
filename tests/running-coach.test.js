@@ -181,6 +181,24 @@ test("OpenAI responder falls back when configured model is denied", async () => 
   assert.deepEqual(triedModels, ["gpt-5.6-terra", "gpt-5-mini"]);
 });
 
+test("OpenAI responder surfaces a sanitized denial code after fallbacks fail", async () => {
+  const responder = createOpenAIResponder(async () => new Response(JSON.stringify({
+    error: {
+      code: "model_not_found",
+      message: "Do not expose this message"
+    }
+  }), { status: 403 }));
+
+  await assert.rejects(
+    responder({
+      env: { OPENAI_API_KEY: "test-key", OPENAI_MODEL: "gpt-5.6-terra" },
+      question: "What changed?",
+      context: { recentWorkouts: [] }
+    }),
+    /openai_403_model_not_found/
+  );
+});
+
 test("model fallback candidates are deduplicated", () => {
   assert.deepEqual(modelCandidates("gpt-5-mini"), ["gpt-5-mini", "gpt-4.1-mini"]);
 });
