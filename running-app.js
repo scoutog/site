@@ -920,7 +920,7 @@ async function sendCoachMessage(event) {
   els["coach-input"].value = "";
   app.coachMessages.push({ role: "user", content: message, workout_id: app.coachWorkoutId, scope: app.coachWorkoutId ? "workout" : "dashboard" });
   renderCoachMessages();
-  setCoachStatus("Thinking...");
+  setCoachStatus("");
   try {
     const { data, error } = await invokeCoach({
       message,
@@ -928,11 +928,13 @@ async function sendCoachMessage(event) {
       scope: app.coachWorkoutId ? "workout" : "dashboard"
     });
     if (error || data?.error || !data?.answer) throw new Error(error?.code || data?.code || "coach_unavailable");
+    app.coachBusy = false;
     app.coachMessages.push({ role: "assistant", content: data.answer, workout_id: app.coachWorkoutId, scope: app.coachWorkoutId ? "workout" : "dashboard" });
     renderCoachMessages();
     setCoachStatus("");
   } catch (error) {
     const code = safeClientErrorCode(error);
+    app.coachBusy = false;
     app.coachMessages.push({ role: "system", content: `Coach is unavailable right now.${code ? ` (${code})` : ""}` });
     renderCoachMessages();
     setCoachStatus("");
@@ -960,10 +962,40 @@ async function clearCoachHistory() {
 function renderCoachMessages() {
   if (!els["coach-messages"]) return;
   const visible = app.coachMessages.slice(-20);
+  const typing = app.coachBusy
+    ? `<div class="coach-message is-assistant is-typing" aria-label="Coach is thinking"><span></span><span></span><span></span></div>`
+    : "";
   els["coach-messages"].innerHTML = visible.length
-    ? visible.map((message) => `<div class="coach-message is-${message.role === "assistant" ? "assistant" : message.role === "user" ? "user" : "system"}">${escapeHtml(message.content || "")}</div>`).join("")
+    ? `${visible.map(renderCoachMessage).join("")}${typing}`
     : `<div class="coach-message is-system">Ask about interval pace, heart-rate trends, Zone 5 time, consistency, or what to watch on the next run. This drawer only shows the current session.</div>`;
   els["coach-messages"].scrollTop = els["coach-messages"].scrollHeight;
+}
+
+function renderCoachMessage(message) {
+  const role = message.role === "assistant" ? "assistant" : message.role === "user" ? "user" : "system";
+  const content = role === "assistant" ? renderCoachMarkdown(message.content || "") : escapeHtml(message.content || "");
+  return `<div class="coach-message is-${role}">${content}</div>`;
+}
+
+function renderCoachMarkdown(content) {
+  const text = String(content || "").trim();
+  if (!text) return "";
+  return text.split(/\n{2,}/).map((block) => {
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    if (lines.length && lines.every((line) => /^[-*]\s+/.test(line))) {
+      return `<ul>${lines.map((line) => `<li>${renderInlineCoachMarkdown(line.replace(/^[-*]\s+/, ""))}</li>`).join("")}</ul>`;
+    }
+    if (lines.length && lines.every((line) => /^\d+[.)]\s+/.test(line))) {
+      return `<ol>${lines.map((line) => `<li>${renderInlineCoachMarkdown(line.replace(/^\d+[.)]\s+/, ""))}</li>`).join("")}</ol>`;
+    }
+    return `<p>${lines.map(renderInlineCoachMarkdown).join("<br>")}</p>`;
+  }).join("");
+}
+
+function renderInlineCoachMarkdown(value) {
+  return escapeHtml(value)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
 }
 
 function setCoachStatus(message) {
