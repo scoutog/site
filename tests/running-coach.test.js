@@ -159,7 +159,7 @@ test("running coach returns a generic error when the model fails", async () => {
   });
   const response = await authedCoachRequest(handler, { message: "What changed?" });
   assert.equal(response.status, 500);
-  assert.deepEqual(await response.json(), { error: "Coach is unavailable right now." });
+  assert.deepEqual(await response.json(), { error: "Coach is unavailable right now.", code: "unexpected_error" });
 });
 
 test("extracts text from OpenAI Responses API shapes", () => {

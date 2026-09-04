@@ -124,8 +124,9 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       await rememberConversation(supabase, user.id, data.memory, data.messages, question, workoutId);
       return json({ answer: cleanAnswer });
     } catch (error) {
-      console.error("running_coach_error", safeErrorCode(error));
-      return json({ error: GENERIC_ERROR }, 500);
+      const code = safeErrorCode(error);
+      console.error("running_coach_error", code);
+      return json({ error: GENERIC_ERROR, code }, 500);
     }
   };
 }
@@ -198,7 +199,7 @@ export function createOpenAIResponder(fetchImpl = fetch) {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        model: env.OPENAI_MODEL || "gpt-4.1-mini",
+        model: env.OPENAI_MODEL || "gpt-5.6-terra",
         instructions: [
           "You are a running coach for one private dashboard.",
           "Use the supplied workout summaries and prior coach conversation only.",

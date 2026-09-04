@@ -163,7 +163,7 @@ supabase secrets set OPENAI_MODEL='gpt-4.1-mini'
 supabase functions deploy running-coach
 ```
 
-`OPENAI_MODEL` is optional; if unset, the function uses `gpt-4.1-mini`. The OpenAI key must never appear in `running-config.js`, `running.html`, `running-app.js`, or any production frontend asset.
+`OPENAI_MODEL` is optional; if unset, the function uses `gpt-5.6-terra`. The OpenAI key must never appear in `running-config.js`, `running.html`, `running-app.js`, or any production frontend asset.
 
 The coach sends OpenAI compact derived workout summaries, recent interval trends, selected workout detail when requested, and recent coach conversation memory. It does not send `raw_imports.payload`, GPS/routes, ingestion tokens, passwords, authorization headers, or service-role keys.
 
