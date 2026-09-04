@@ -137,7 +137,8 @@ serve(async (request) => {
 
     await rememberConversation(supabase, user.id, data.memory, data.messages, question, workoutId);
     return json({ answer: cleanAnswer });
-  } catch (_error) {
+  } catch (error) {
+    console.error("running_coach_error", safeErrorCode(error));
     return json({ error: GENERIC_ERROR }, 500);
   }
 });
@@ -203,7 +204,7 @@ async function askOpenAI(question, context) {
       max_output_tokens: 650
     })
   });
-  if (!response.ok) throw new Error("openai_request_failed");
+  if (!response.ok) throw new Error(`openai_request_failed_${response.status}`);
   const data = await response.json();
   return extractResponseText(data);
 }
@@ -508,6 +509,12 @@ function dateOnly(value) {
 function truncate(value, length) {
   const text = String(value || "").trim();
   return text.length > length ? `${text.slice(0, length - 1)}...` : text;
+}
+
+function safeErrorCode(error) {
+  const message = String(error?.message || "unknown_error").toLowerCase();
+  const match = message.match(/^[a-z0-9_:-]{1,80}$/);
+  return match ? match[0] : "unexpected_error";
 }
 
 function json(body, status = 200) {
