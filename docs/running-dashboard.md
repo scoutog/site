@@ -167,6 +167,8 @@ supabase functions deploy running-coach
 
 The coach sends OpenAI compact derived workout summaries, recent interval trends, selected workout detail when requested, and recent coach conversation memory. It does not send `raw_imports.payload`, GPS/routes, ingestion tokens, passwords, authorization headers, or service-role keys.
 
+The visible coach drawer only shows messages from the current browser session. Previous coach questions are stored privately in Supabase for future context, but they are not auto-rendered into a fresh incognito or newly unlocked browser session.
+
 If the coach drawer says “Coach is unavailable right now,” check that:
 
 - `coach_messages` and `coach_memory` migrations have been applied.

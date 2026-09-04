@@ -172,7 +172,6 @@ async function enterDashboard() {
   showDashboard();
   await ensureProfileAndGoal();
   await loadData();
-  await loadCoachMessages();
 }
 
 function showLock(message = "") {
@@ -893,18 +892,6 @@ function clearPrivateData() {
   }
 }
 
-async function loadCoachMessages() {
-  if (!app.supabase || !app.user) return;
-  const { data, error } = await app.supabase
-    .from("coach_messages")
-    .select("role,scope,workout_id,content,created_at")
-    .eq("user_id", app.user.id)
-    .order("created_at", { ascending: false })
-    .limit(12);
-  app.coachMessages = error ? [] : (data || []).slice().reverse();
-  renderCoachMessages();
-}
-
 function openCoach({ workoutId = null, prompt = "" } = {}) {
   app.coachWorkoutId = workoutId;
   els["coach-panel"].hidden = false;
@@ -975,7 +962,7 @@ function renderCoachMessages() {
   const visible = app.coachMessages.slice(-20);
   els["coach-messages"].innerHTML = visible.length
     ? visible.map((message) => `<div class="coach-message is-${message.role === "assistant" ? "assistant" : message.role === "user" ? "user" : "system"}">${escapeHtml(message.content || "")}</div>`).join("")
-    : `<div class="coach-message is-system">Ask about interval pace, heart-rate trends, Zone 5 time, consistency, or what to watch on the next run.</div>`;
+    : `<div class="coach-message is-system">Ask about interval pace, heart-rate trends, Zone 5 time, consistency, or what to watch on the next run. This drawer only shows the current session.</div>`;
   els["coach-messages"].scrollTop = els["coach-messages"].scrollHeight;
 }
 
