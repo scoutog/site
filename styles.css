@@ -1936,7 +1936,21 @@ li + li {
 }
 
 .coach-form textarea {
+  width: 100%;
   min-height: 5.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(8, 8, 6, 0.72);
+  color: var(--text);
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+}
+
+.coach-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 @media (max-width: 900px) {
