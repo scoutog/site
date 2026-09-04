@@ -14,7 +14,7 @@ const MAX_MESSAGE_CHARS = 1200;
 const corsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "POST, OPTIONS",
-  "access-control-allow-headers": "authorization, apikey, content-type, x-client-info",
+  "access-control-allow-headers": "authorization, apikey, content-type, x-client-info, x-running-access-token",
   "access-control-max-age": "86400"
 };
 
@@ -29,7 +29,9 @@ serve(async (request) => {
     }
 
     const authorization = request.headers.get("authorization") || "";
-    if (!authorization.match(/^Bearer\s+[-_A-Za-z0-9.]+$/)) {
+    const sessionToken = request.headers.get("x-running-access-token") || "";
+    const userAuthorization = sessionToken ? `Bearer ${sessionToken}` : authorization;
+    if (!userAuthorization.match(/^Bearer\s+[-_A-Za-z0-9.]+$/)) {
       return json({ error: "Authentication required" }, 401);
     }
 
@@ -62,7 +64,7 @@ serve(async (request) => {
         auth: { persistSession: false, autoRefreshToken: false },
         global: {
           headers: {
-            authorization,
+            authorization: userAuthorization,
             "x-application-name": "scout-running-coach"
           }
         }

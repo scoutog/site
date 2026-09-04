@@ -7,7 +7,7 @@ const GENERIC_ERROR = "Coach is unavailable right now.";
 const corsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "POST, OPTIONS",
-  "access-control-allow-headers": "authorization, apikey, content-type, x-client-info",
+  "access-control-allow-headers": "authorization, apikey, content-type, x-client-info, x-running-access-token",
   "access-control-max-age": "86400"
 };
 
@@ -23,7 +23,9 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       }
 
       const authorization = request.headers.get("authorization") || "";
-      if (!authorization.match(/^Bearer\s+[-_A-Za-z0-9.]+$/)) {
+      const sessionToken = request.headers.get("x-running-access-token") || "";
+      const userAuthorization = sessionToken ? `Bearer ${sessionToken}` : authorization;
+      if (!userAuthorization.match(/^Bearer\s+[-_A-Za-z0-9.]+$/)) {
         return json({ error: "Authentication required" }, 401);
       }
 
@@ -49,7 +51,7 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
         return json({ error: GENERIC_ERROR }, 400);
       }
 
-      const supabase = supabaseFactory(authorization);
+      const supabase = supabaseFactory(userAuthorization);
       const { data: userData, error: userError } = await supabase.auth.getUser();
       const user = userData?.user;
       if (userError || !user?.id) {

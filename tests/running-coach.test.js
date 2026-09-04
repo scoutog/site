@@ -89,6 +89,30 @@ test("running coach rejects malformed JSON with a generic error", async () => {
   assert.deepEqual(await response.json(), { error: "Coach is unavailable right now." });
 });
 
+test("running coach accepts session token from custom header", async () => {
+  let forwardedAuthorization = "";
+  const handler = createCoachHandler({
+    env: {},
+    supabaseFactory: (authorization) => {
+      forwardedAuthorization = authorization;
+      return fakeSupabase(sampleState());
+    },
+    openAIResponder: async () => "Use the interval chart and compare HR drift."
+  });
+  const response = await handler(new Request("https://example.com", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer publishable-key",
+      apikey: "publishable-key",
+      "x-running-access-token": "header.payload.signature",
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({ message: "What should I watch?" })
+  }));
+  assert.equal(response.status, 200);
+  assert.equal(forwardedAuthorization, "Bearer header.payload.signature");
+});
+
 test("running coach stores user and assistant messages", async () => {
   const state = sampleState();
   const handler = createCoachHandler({
