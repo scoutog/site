@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=32">
+  <link rel="stylesheet" href="/styles.css?v=33">
   <script src="/running-config.js?v=3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script type="module" src="/running-app.js?v=13"></script>
+  <script type="module" src="/running-app.js?v=14"></script>
 </head>
 <body>
   <header class="site-header">
@@ -67,6 +67,10 @@
         </div>
         <div id="month-run-days" class="month-run-days"></div>
         <p id="month-run-summary" class="month-run-summary"></p>
+      </section>
+
+      <section class="running-section running-top-chart">
+        <article class="chart-card chart-wide"><h3>Running and walking pace by workout</h3><canvas id="run-walk-pace-chart"></canvas><p class="chart-empty"></p></article>
       </section>
 
       <div id="dashboard-message" class="running-banner" role="status" aria-live="polite" hidden></div>

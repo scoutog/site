@@ -430,8 +430,6 @@ function renderObservations(workouts) {
   const observations = [];
   const sorted = [...workouts].sort((a, b) => new Date(a.started_at) - new Date(b.started_at));
   const qualifying = sorted.filter((workout) => qualifyWorkout(workout, app.minimumSeconds));
-  const goal = currentWeekGoalProgress(sorted);
-  observations.push(`Training trend: you are ${goal.completed} of ${goal.target} workouts into your current goal.`);
   const recent = qualifying.slice(-3);
   if (recent.length === 3) {
     const firstHr = recent[0].average_heart_rate_bpm;
@@ -440,12 +438,11 @@ function renderObservations(workouts) {
     const lastPace = paceSeconds(recent[2].distance_meters, recent[2].duration_seconds, app.unit);
     if (Number.isFinite(Number(firstHr)) && Number.isFinite(Number(lastHr)) && firstPace && lastPace && Math.abs(lastPace - firstPace) / firstPace < 0.06) {
       const diff = Math.round(Number(lastHr) - Number(firstHr));
-      observations.push(`Training trend: average HR ${diff <= 0 ? "decreased" : "increased"} by ${Math.abs(diff)} BPM across your last three similarly paced workouts.`);
+      if (Math.abs(diff) >= 3) {
+        observations.push(`Training trend: average HR ${diff <= 0 ? "decreased" : "increased"} by ${Math.abs(diff)} BPM across your last three similarly paced workouts.`);
+      }
     }
   }
-  const weekly = weeklyAggregation(sorted, { timezone: app.timezone, minimumSeconds: app.minimumSeconds });
-  const latestWeek = weekly.at(-1);
-  if (latestWeek) observations.push(`Training trend: you completed ${latestWeek.count} qualifying run${latestWeek.count === 1 ? "" : "s"} this week.`);
   if (sorted.length >= 2) {
     const previous = sorted.at(-2);
     const latest = sorted.at(-1);
@@ -456,6 +453,20 @@ function renderObservations(workouts) {
     if (previousZ5 !== null && latestZ5 !== null && previousPace && latestPace && latestZ5 < previousZ5 && Math.abs(latestPace - previousPace) / previousPace < 0.07) {
       observations.push("Training trend: Zone 5 time decreased while average pace remained stable.");
     }
+    const hrDiff = roundedNumberOrNull(Number(latest.average_heart_rate_bpm) - Number(previous.average_heart_rate_bpm));
+    const paceDiff = latestPace && previousPace ? Math.round(latestPace - previousPace) : null;
+    if (paceDiff !== null && Math.abs(paceDiff) >= 15 && hrDiff !== null && Math.abs(hrDiff) <= 5) {
+      observations.push(`Training trend: average pace ${paceDiff <= 0 ? "improved" : "slowed"} by ${formatDuration(Math.abs(paceDiff))} / ${app.unit} while average HR stayed within ${Math.abs(hrDiff)} BPM of your previous workout.`);
+    }
+    if (hrDiff !== null && Math.abs(hrDiff) >= 5 && paceDiff !== null && Math.abs(paceDiff) <= 20) {
+      observations.push(`Training trend: average HR ${hrDiff <= 0 ? "decreased" : "increased"} by ${Math.abs(hrDiff)} BPM while average pace stayed within ${formatDuration(Math.abs(paceDiff))} / ${app.unit}.`);
+    }
+    const previousWorkPace = intervalPaceSeconds(app.intervals[previous.id] || [], "work");
+    const latestWorkPace = intervalPaceSeconds(app.intervals[latest.id] || [], "work");
+    const workPaceDiff = previousWorkPace && latestWorkPace ? Math.round(latestWorkPace - previousWorkPace) : null;
+    if (workPaceDiff !== null && Math.abs(workPaceDiff) >= 15) {
+      observations.push(`Training trend: running-interval pace ${workPaceDiff <= 0 ? "improved" : "slowed"} by ${formatDuration(Math.abs(workPaceDiff))} / ${app.unit} compared with your previous workout.`);
+    }
     const previousRatio = workRecoveryRatio(app.intervals[previous.id] || []);
     const latestRatio = workRecoveryRatio(app.intervals[latest.id] || []);
     if (previousRatio.ratio && latestRatio.ratio && latestRatio.ratio > previousRatio.ratio) {
@@ -464,7 +475,7 @@ function renderObservations(workouts) {
   }
   els["trend-observations"].innerHTML = observations.length
     ? observations.map((item) => `<p>${escapeHtml(item)}</p>`).join("")
-    : `<p class="brief-sub">Charts need more workouts before trend observations are supported.</p>`;
+    : `<p class="brief-sub">No notable metric trend yet.</p>`;
 }
 
 function renderWorkoutTable(workouts) {
@@ -505,7 +516,13 @@ function renderCharts(workouts) {
   const recoveryHr = workouts.map((workout) => intervalHr(workout.id, "recovery"));
   const oneMinuteRecovery = workouts.map((workout) => recoveryDrop(workout.id, 1));
   const twoMinuteRecovery = workouts.map((workout) => recoveryDrop(workout.id, 2));
+  const workPace = workouts.map((workout) => intervalPaceMinutes(workout, "work"));
+  const recoveryPace = workouts.map((workout) => intervalPaceMinutes(workout, "recovery"));
 
+  drawChart("run-walk-pace-chart", "line", labels, [
+    { label: `Running pace min/${app.unit}`, data: workPace, borderColor: chartColors.green, backgroundColor: chartColors.softGreen, tension: 0.25 },
+    { label: `Walking pace min/${app.unit}`, data: recoveryPace, borderColor: chartColors.cyan, backgroundColor: "rgba(56,189,248,.16)", tension: 0.25 }
+  ], chartOptions({ y: paddedScale([...workPace, ...recoveryPace], { minSpan: 3, tickPrecision: 1 }) }));
   drawChart("pace-chart", "line", labels, [{ label: `Pace min/${app.unit}`, data: selectedPace, borderColor: chartColors.amber, backgroundColor: chartColors.softAmber, tension: 0.25 }], chartOptions({ y: paddedScale(selectedPace, { minSpan: 3, tickPrecision: 1 }) }));
   drawChart("hr-chart", "line", labels, [{ label: "Average HR BPM", data: selectedHr, borderColor: chartColors.green, backgroundColor: chartColors.softGreen, tension: 0.25 }], chartOptions({ y: paddedScale(selectedHr, { minSpan: 40, tickPrecision: 0 }) }));
   drawChart("pace-hr-chart", "line", labels, [
@@ -531,7 +548,6 @@ function renderCharts(workouts) {
     { label: "Work minutes", data: workouts.map((workout) => intervalSummary(app.intervals[workout.id] || []).workSeconds / 60 || null), backgroundColor: chartColors.green },
     { label: "Recovery minutes", data: workouts.map((workout) => intervalSummary(app.intervals[workout.id] || []).recoverySeconds / 60 || null), backgroundColor: chartColors.muted }
   ], { ...chartBase, scales: { x: { stacked: true, ticks: { color: chartColors.muted, maxRotation: 0 }, grid: { color: chartColors.grid } }, y: { stacked: true, ticks: { color: chartColors.muted }, grid: { color: chartColors.grid } } } });
-  const workPace = workouts.map(workIntervalPace);
   drawChart("work-pace-chart", "line", labels, [{ label: `Work interval pace min/${app.unit}`, data: workPace, borderColor: chartColors.amber }], chartOptions({ y: paddedScale(workPace, { minSpan: 3, tickPrecision: 1 }) }));
   drawChart("work-recovery-hr-chart", "bar", labels, [
     { label: "Work HR", data: workHr, backgroundColor: chartColors.green },
@@ -570,11 +586,16 @@ function drawChart(id, type, labels, datasets, options) {
   app.charts.set(id, new Chart(canvas, { type, data: { labels, datasets }, options }));
 }
 
-function chartOptions(scales = {}) {
+function chartOptions(scales = {}, extras = {}) {
+  const { plugins = {}, ...rest } = extras;
   return {
+    ...rest,
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { labels: { color: chartColors.text } } },
+    plugins: {
+      legend: { labels: { color: chartColors.text } },
+      ...plugins
+    },
     scales: chartScales(scales)
   };
 }
@@ -650,6 +671,18 @@ function renderWorkoutDetailCharts(workout, intervals) {
   ], chartOptions({
     y: { min: 0 },
     y1: paddedScale(rows.map((row) => roundedNumberOrNull(row.average_heart_rate_bpm)), { minSpan: 50, position: "right", drawGrid: false, tickPrecision: 0 })
+  }, {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          afterLabel(context) {
+            if (context.dataset.yAxisID !== "y") return "";
+            const row = rows[context.dataIndex];
+            return `Pace: ${formatPace(paceSeconds(row.distance_meters, row.duration_seconds, app.unit), app.unit)}`;
+          }
+        }
+      }
+    }
   }));
 }
 
@@ -665,6 +698,8 @@ function openWorkout(id, pushState = false) {
   const intervals = app.intervals[workout.id] || [];
   const exactSplits = exactWorkoutSplits(workout, intervals);
   const zones = zonePercentages(app.zones[workout.id] || []);
+  const runningPace = intervalPaceSeconds(intervals, "work");
+  const walkingPace = intervalPaceSeconds(intervals, "recovery");
   els["dialog-title"].textContent = "Workout Detail";
   els["dialog-subtitle"].textContent = `${formatDateTime(workout.started_at)} · ${formatDistanceOrMissing(workout.distance_meters)}`;
   els["dialog-body"].innerHTML = `
@@ -674,6 +709,8 @@ function openWorkout(id, pushState = false) {
       ${metric("Average pace", formatPace(paceSeconds(workout.distance_meters, workout.duration_seconds, app.unit), app.unit))}
       ${metric("Average HR", bpm(workout.average_heart_rate_bpm))}
       ${metric("Maximum HR", bpm(workout.maximum_heart_rate_bpm))}
+      ${metric("Avg running pace", formatPace(runningPace, app.unit))}
+      ${metric("Avg walking pace", formatPace(walkingPace, app.unit))}
       ${metric("Work/recovery", intervalSummary(app.intervals[workout.id] || []).label)}
     </section>
     <p class="running-comparison">${comparable ? compareWorkout(workout, comparable) : "No comparable earlier workout found within the documented duration, distance, and pace tolerances."}</p>
@@ -948,12 +985,16 @@ function makeSplit(number, distanceMeters, durationSeconds, hrWeighted, hrSecond
   };
 }
 
-function workIntervalPace(workout) {
-  const intervals = (app.intervals[workout.id] || []).filter((interval) => interval.interval_type === "work");
-  const meters = intervals.reduce((sum, interval) => sum + Number(interval.distance_meters || 0), 0);
-  const seconds = intervals.reduce((sum, interval) => sum + Number(interval.duration_seconds || 0), 0);
-  const pace = paceSeconds(meters, seconds, app.unit);
+function intervalPaceMinutes(workout, type) {
+  const pace = intervalPaceSeconds(app.intervals[workout.id] || [], type);
   return pace ? pace / 60 : null;
+}
+
+function intervalPaceSeconds(intervals, type) {
+  const typed = intervals.filter((interval) => interval.interval_type === type);
+  const meters = typed.reduce((sum, interval) => sum + Number(interval.distance_meters || 0), 0);
+  const seconds = typed.reduce((sum, interval) => sum + Number(interval.duration_seconds || 0), 0);
+  return paceSeconds(meters, seconds, app.unit);
 }
 
 function paceMinutes(workout) {

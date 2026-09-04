@@ -1203,6 +1203,11 @@ li + li {
   padding-top: 0;
 }
 
+.running-top-chart {
+  border-top: 0;
+  padding-top: 0;
+}
+
 .running-section-head {
   display: flex;
   align-items: start;
