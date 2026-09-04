@@ -25,6 +25,7 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       const authorization = request.headers.get("authorization") || "";
       const sessionToken = request.headers.get("x-running-access-token") || "";
       const userAuthorization = sessionToken ? `Bearer ${sessionToken}` : authorization;
+      const userToken = userAuthorization.match(/^Bearer\s+(.+)$/i)?.[1] || "";
       if (!userAuthorization.match(/^Bearer\s+[-_A-Za-z0-9.]+$/)) {
         return json({ error: "Authentication required" }, 401);
       }
@@ -52,7 +53,7 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       }
 
       const supabase = supabaseFactory(userAuthorization);
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser(userToken);
       const user = userData?.user;
       if (userError || !user?.id) {
         return json({ error: "Authentication required" }, 401);

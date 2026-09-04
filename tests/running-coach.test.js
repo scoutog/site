@@ -91,11 +91,16 @@ test("running coach rejects malformed JSON with a generic error", async () => {
 
 test("running coach accepts session token from custom header", async () => {
   let forwardedAuthorization = "";
+  let getUserToken = "";
   const handler = createCoachHandler({
     env: {},
     supabaseFactory: (authorization) => {
       forwardedAuthorization = authorization;
-      return fakeSupabase(sampleState());
+      return fakeSupabase(sampleState(), {
+        onGetUser(token) {
+          getUserToken = token;
+        }
+      });
     },
     openAIResponder: async () => "Use the interval chart and compare HR drift."
   });
@@ -111,6 +116,7 @@ test("running coach accepts session token from custom header", async () => {
   }));
   assert.equal(response.status, 200);
   assert.equal(forwardedAuthorization, "Bearer header.payload.signature");
+  assert.equal(getUserToken, "header.payload.signature");
 });
 
 test("running coach stores user and assistant messages", async () => {
@@ -210,10 +216,11 @@ function sampleState() {
   };
 }
 
-function fakeSupabase(state = sampleState()) {
+function fakeSupabase(state = sampleState(), hooks = {}) {
   return {
     auth: {
-      async getUser() {
+      async getUser(token) {
+        hooks.onGetUser?.(token);
         return { data: { user: { id: userId } }, error: null };
       }
     },
