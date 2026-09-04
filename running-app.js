@@ -940,12 +940,13 @@ async function sendCoachMessage(event) {
       workoutId: app.coachWorkoutId,
       scope: app.coachWorkoutId ? "workout" : "dashboard"
     });
-    if (error || data?.error || !data?.answer) throw new Error("coach_unavailable");
+    if (error || data?.error || !data?.answer) throw new Error(error?.code || data?.code || "coach_unavailable");
     app.coachMessages.push({ role: "assistant", content: data.answer, workout_id: app.coachWorkoutId, scope: app.coachWorkoutId ? "workout" : "dashboard" });
     renderCoachMessages();
     setCoachStatus("");
-  } catch (_error) {
-    app.coachMessages.push({ role: "system", content: "Coach is unavailable right now." });
+  } catch (error) {
+    const code = safeClientErrorCode(error);
+    app.coachMessages.push({ role: "system", content: `Coach is unavailable right now.${code ? ` (${code})` : ""}` });
     renderCoachMessages();
     setCoachStatus("");
   } finally {
@@ -961,10 +962,11 @@ async function clearCoachHistory() {
   setCoachStatus("Clearing...");
   try {
     const { data, error } = await invokeCoach({ action: "clear" });
-    if (error || data?.error) throw new Error("coach_clear_failed");
+    if (error || data?.error) throw new Error(error?.code || data?.code || "coach_clear_failed");
     setCoachStatus("Coach history cleared.");
-  } catch (_error) {
-    setCoachStatus("Coach is unavailable right now.");
+  } catch (error) {
+    const code = safeClientErrorCode(error);
+    setCoachStatus(`Coach is unavailable right now.${code ? ` (${code})` : ""}`);
   }
 }
 
@@ -1000,7 +1002,12 @@ async function invokeCoach(body) {
     body: JSON.stringify(body)
   });
   const data = await response.json().catch(() => null);
-  return { data, error: response.ok ? null : data?.error || "Coach is unavailable right now." };
+  return { data, error: response.ok ? null : data || { error: "Coach is unavailable right now." } };
+}
+
+function safeClientErrorCode(error) {
+  const message = String(error?.message || "");
+  return /^[a-z0-9_:-]{1,80}$/.test(message) && message !== "coach_unavailable" ? message : "";
 }
 
 function authStorageKey() {

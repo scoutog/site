@@ -53,6 +53,7 @@ test("running coach rejects unauthenticated requests", async () => {
     body: JSON.stringify({ message: "hello" })
   }));
   assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), { error: "Coach is unavailable right now.", code: "auth_missing_or_invalid_token" });
 });
 
 test("running coach rejects another user's workout id", async () => {

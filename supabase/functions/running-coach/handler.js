@@ -27,7 +27,7 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       const userAuthorization = sessionToken ? `Bearer ${sessionToken}` : authorization;
       const userToken = userAuthorization.match(/^Bearer\s+(.+)$/i)?.[1] || "";
       if (!userAuthorization.match(/^Bearer\s+[-_A-Za-z0-9.]+$/)) {
-        return json({ error: "Authentication required" }, 401);
+        return json({ error: GENERIC_ERROR, code: "auth_missing_or_invalid_token" }, 401);
       }
 
       const contentType = request.headers.get("content-type") || "";
@@ -56,12 +56,12 @@ export function createCoachHandler({ env, supabaseFactory, openAIResponder = cre
       const { data: userData, error: userError } = await supabase.auth.getUser(userToken);
       const user = userData?.user;
       if (userError || !user?.id) {
-        return json({ error: "Authentication required" }, 401);
+        return json({ error: GENERIC_ERROR, code: "auth_session_not_verified" }, 401);
       }
 
       const privateUser = await single(supabase.from("running_private_users").select("id").eq("id", user.id));
       if (!privateUser.data) {
-        return json({ error: "Authentication required" }, 403);
+        return json({ error: GENERIC_ERROR, code: "auth_user_not_allowed" }, 403);
       }
 
       if (body.action === "clear") {
