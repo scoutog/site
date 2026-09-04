@@ -936,7 +936,7 @@ async function sendCoachMessage(event) {
   setCoachStatus("Thinking...");
   try {
     const { data, error } = await app.supabase.functions.invoke("running-coach", {
-      headers: coachAuthHeaders(),
+      headers: await coachAuthHeaders(),
       body: {
         message,
         workoutId: app.coachWorkoutId,
@@ -964,7 +964,7 @@ async function clearCoachHistory() {
   setCoachStatus("Clearing...");
   try {
     const { data, error } = await app.supabase.functions.invoke("running-coach", {
-      headers: coachAuthHeaders(),
+      headers: await coachAuthHeaders(),
       body: { action: "clear" }
     });
     if (error || data?.error) throw new Error("coach_clear_failed");
@@ -987,7 +987,10 @@ function setCoachStatus(message) {
   if (els["coach-status"]) els["coach-status"].textContent = message || "";
 }
 
-function coachAuthHeaders() {
+async function coachAuthHeaders() {
+  const { data } = await app.supabase.auth.getSession();
+  app.session = data?.session || app.session;
+  app.user = app.session?.user || app.user;
   return app.session?.access_token ? { Authorization: `Bearer ${app.session.access_token}` } : {};
 }
 
