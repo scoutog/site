@@ -33,6 +33,7 @@ Static website hosted on GitHub Pages.
 - Supabase password authentication using one fixed account
 - Postgres storage with row-level security migrations in `supabase/migrations`
 - Health Auto Export ingestion Edge Function in `supabase/functions/import-health-data`
+- Authenticated AI coach Edge Function in `supabase/functions/running-coach`
 - Notes, deletion controls, Health Auto Export ingestion, and responsive Chart.js views
 - Setup guide: `docs/running-dashboard.md`
 

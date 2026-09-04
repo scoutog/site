@@ -13,7 +13,7 @@
   <script src="/running-config.js?v=3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script type="module" src="/running-app.js?v=14"></script>
+  <script type="module" src="/running-app.js?v=15"></script>
 </head>
 <body>
   <header class="site-header">
@@ -195,6 +195,34 @@
           </form>
         </div>
       </details>
+
+      <button id="coach-fab" class="coach-fab" type="button" aria-controls="coach-panel" aria-expanded="false">Coach</button>
+      <aside id="coach-panel" class="coach-panel" hidden aria-labelledby="coach-title">
+        <div class="coach-head">
+          <div>
+            <h2 id="coach-title">Running Coach</h2>
+            <p id="coach-context-label" class="brief-sub">Dashboard context</p>
+          </div>
+          <button id="coach-close-button" type="button" aria-label="Close coach">Close</button>
+        </div>
+        <div id="coach-messages" class="coach-messages" aria-live="polite"></div>
+        <div class="coach-starters" aria-label="Suggested coach questions">
+          <button type="button" data-coach-starter="What stands out in my recent interval runs?">Recent intervals</button>
+          <button type="button" data-coach-starter="Is my running pace improving at a similar heart rate?">Pace vs HR</button>
+          <button type="button" data-coach-starter="What should I watch in my next run?">Next run</button>
+        </div>
+        <form id="coach-form" class="coach-form">
+          <label class="running-field">
+            <span>Ask coach</span>
+            <textarea id="coach-input" rows="3" maxlength="2000" placeholder="Ask about trends, intervals, HR, or the latest run"></textarea>
+          </label>
+          <div class="coach-actions">
+            <button id="coach-clear-button" type="button">Clear history</button>
+            <button id="coach-send-button" type="submit">Send</button>
+          </div>
+          <p id="coach-status" class="running-status" role="status" aria-live="polite"></p>
+        </form>
+      </aside>
     </section>
   </main>
 

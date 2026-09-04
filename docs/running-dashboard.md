@@ -1,6 +1,6 @@
 # Running Dashboard Setup
 
-The running dashboard lives at `/running.html` and stays within the existing static GitHub Pages site. The frontend uses Supabase Auth, Postgres with row-level security, Supabase Edge Functions for Health Auto Export ingestion, and Chart.js from a CDN.
+The running dashboard lives at `/running.html` and stays within the existing static GitHub Pages site. The frontend uses Supabase Auth, Postgres with row-level security, Supabase Edge Functions for Health Auto Export ingestion and the authenticated AI coach, and Chart.js from a CDN.
 
 ## 1. Run The Website Locally
 
@@ -25,7 +25,7 @@ supabase link --project-ref YOUR-PROJECT-REF
 supabase db push
 ```
 
-This applies `supabase/migrations/202609020001_running_dashboard.sql`, creating private tables, constraints, indexes, cascading relationships, and RLS policies.
+This applies the migrations in `supabase/migrations`, creating private workout tables, coach conversation tables, constraints, indexes, cascading relationships, and RLS policies.
 
 ## 4. Create The Single Fixed Supabase Auth Account
 
@@ -92,6 +92,7 @@ The service-role key and ingestion secret must never appear in `running.html`, `
 
 ```sh
 supabase functions deploy import-health-data
+supabase functions deploy running-coach
 ```
 
 The endpoint will be:
@@ -99,6 +100,14 @@ The endpoint will be:
 ```text
 https://YOUR-PROJECT-REF.supabase.co/functions/v1/import-health-data
 ```
+
+The authenticated coach endpoint will be:
+
+```text
+https://YOUR-PROJECT-REF.supabase.co/functions/v1/running-coach
+```
+
+It is called by the dashboard with your logged-in Supabase session. Do not call it from Health Auto Export.
 
 ## 10. Configure Health Auto Export
 
@@ -144,6 +153,27 @@ supabase functions deploy import-health-data
 
 Update Health Auto Export's `Authorization` header to use the new token. Retire the old token from any password manager or notes.
 
+## AI Coach Setup
+
+The AI coach is private server-side functionality. Add these as Supabase Edge Function secrets only:
+
+```sh
+supabase secrets set OPENAI_API_KEY='YOUR_SERVER_SIDE_OPENAI_API_KEY'
+supabase secrets set OPENAI_MODEL='gpt-4.1-mini'
+supabase functions deploy running-coach
+```
+
+`OPENAI_MODEL` is optional; if unset, the function uses `gpt-4.1-mini`. The OpenAI key must never appear in `running-config.js`, `running.html`, `running-app.js`, or any production frontend asset.
+
+The coach sends OpenAI compact derived workout summaries, recent interval trends, selected workout detail when requested, and recent coach conversation memory. It does not send `raw_imports.payload`, GPS/routes, ingestion tokens, passwords, authorization headers, or service-role keys.
+
+If the coach drawer says “Coach is unavailable right now,” check that:
+
+- `coach_messages` and `coach_memory` migrations have been applied.
+- `running-coach` is deployed.
+- `OPENAI_API_KEY` is set in Edge Function secrets.
+- Your logged-in Auth user is still present in `running_private_users`.
+
 ## 16. Deploy The GitHub Pages Site
 
 Commit and push to `master`. The existing GitHub Actions workflow deploys the repository root to GitHub Pages and preserves the custom domain from `CNAME`.
@@ -157,8 +187,10 @@ Back up from Supabase directly using Table Editor exports or database backups. T
 - `running-config.js` contains frontend-safe public values only.
 - RLS policies require `auth.uid() = user_id` for parent tables.
 - Child table policies verify ownership through `workouts.user_id`.
+- Coach conversation policies require `auth.uid() = user_id`; coach messages with a workout ID also verify workout ownership.
 - `running_private_users` allowlists the single fixed dashboard account.
 - The Edge Function uses the service-role key only server-side.
+- The AI coach Edge Function uses the OpenAI API key only server-side.
 - Health Auto Export payloads are stored in `raw_imports` for auditing and normalized idempotently into relational tables.
 - Duplicate prevention uses `raw_imports(user_id, payload_hash)` and `workouts(user_id, source, source_workout_id)`.
 - The parser ignores GPS route data in version 1.

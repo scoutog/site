@@ -29,6 +29,9 @@ const app = {
   intervals: {},
   zones: {},
   recovery: {},
+  coachMessages: [],
+  coachWorkoutId: null,
+  coachBusy: false,
   profile: null,
   activeGoal: null,
   unit: config.defaultDistanceUnit || "mi",
@@ -68,7 +71,9 @@ async function init() {
     "runs-28-days", "weekly-streak", "days-since-run", "latest-workout", "trend-observations",
     "workouts-table", "settings-form", "goal-target", "goal-days", "minimum-seconds", "distance-unit",
     "timezone-input", "zone-form", "zone-inputs",
-    "workout-dialog", "dialog-title", "dialog-subtitle", "dialog-body"
+    "workout-dialog", "dialog-title", "dialog-subtitle", "dialog-body",
+    "coach-fab", "coach-panel", "coach-title", "coach-context-label", "coach-close-button",
+    "coach-messages", "coach-form", "coach-input", "coach-send-button", "coach-clear-button", "coach-status"
   ].forEach((id) => { els[id] = document.getElementById(id); });
 
   if (!isConfigured()) {
@@ -85,6 +90,16 @@ async function init() {
   els["settings-form"].addEventListener("submit", saveSettings);
   els["zone-form"].addEventListener("submit", saveZones);
   els["workout-dialog"].addEventListener("close", clearWorkoutQuery);
+  els["coach-fab"].addEventListener("click", () => openCoach());
+  els["coach-close-button"].addEventListener("click", closeCoach);
+  els["coach-form"].addEventListener("submit", sendCoachMessage);
+  els["coach-clear-button"].addEventListener("click", clearCoachHistory);
+  document.querySelectorAll("[data-coach-starter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      els["coach-input"].value = button.dataset.coachStarter;
+      els["coach-input"].focus();
+    });
+  });
 
   renderZoneInputs();
   await restoreSession();
@@ -157,6 +172,7 @@ async function enterDashboard() {
   showDashboard();
   await ensureProfileAndGoal();
   await loadData();
+  await loadCoachMessages();
 }
 
 function showLock(message = "") {
@@ -421,9 +437,15 @@ function renderLatest(workouts) {
     </div>
     <div class="zone-bars">${renderZoneBars(zones)}</div>
     <p class="running-comparison">${comparison}</p>
-    <button type="button" data-workout-open="${latest.id}">Open workout detail</button>
+    <div class="dialog-actions">
+      <button type="button" data-workout-open="${latest.id}">Open workout detail</button>
+      <button type="button" data-coach-workout="${latest.id}">Ask coach about this workout</button>
+    </div>
   `;
   els["latest-workout"].querySelector("[data-workout-open]").addEventListener("click", () => openWorkout(latest.id, true));
+  els["latest-workout"].querySelector("[data-coach-workout]").addEventListener("click", () => {
+    openCoach({ workoutId: latest.id, prompt: "What stands out in my latest workout?" });
+  });
 }
 
 function renderObservations(workouts) {
@@ -731,10 +753,14 @@ function openWorkout(id, pushState = false) {
     ${renderRecovery(workout.id)}
     <label class="running-field"><span>Notes</span><textarea id="detail-notes">${escapeHtml(workout.notes || "")}</textarea></label>
     <div class="dialog-actions">
+      <button id="ask-coach-workout-button" type="button">Ask coach about this workout</button>
       <button id="save-notes-button" type="button">Save notes</button>
       <button id="delete-workout-button" type="button" class="danger-button">Delete workout</button>
     </div>
   `;
+  els["dialog-body"].querySelector("#ask-coach-workout-button").addEventListener("click", () => {
+    openCoach({ workoutId: workout.id, prompt: "What should I learn from this workout?" });
+  });
   els["dialog-body"].querySelector("#save-notes-button").addEventListener("click", () => saveNotes(workout.id));
   els["dialog-body"].querySelector("#delete-workout-button").addEventListener("click", () => deleteWorkout(workout.id));
   els["workout-dialog"].showModal();
@@ -850,11 +876,113 @@ function clearPrivateData() {
   app.intervals = {};
   app.zones = {};
   app.recovery = {};
+  app.coachMessages = [];
+  app.coachWorkoutId = null;
+  app.coachBusy = false;
   app.charts.forEach((chart) => chart.destroy());
   app.charts.clear();
   ["latest-workout", "trend-observations", "workouts-table"].forEach((id) => {
     if (els[id]) els[id].innerHTML = "";
   });
+  if (els["coach-panel"]) {
+    els["coach-panel"].hidden = true;
+    els["coach-fab"]?.setAttribute("aria-expanded", "false");
+    els["coach-input"].value = "";
+    setCoachStatus("");
+    renderCoachMessages();
+  }
+}
+
+async function loadCoachMessages() {
+  if (!app.supabase || !app.user) return;
+  const { data, error } = await app.supabase
+    .from("coach_messages")
+    .select("role,scope,workout_id,content,created_at")
+    .eq("user_id", app.user.id)
+    .order("created_at", { ascending: false })
+    .limit(12);
+  app.coachMessages = error ? [] : (data || []).slice().reverse();
+  renderCoachMessages();
+}
+
+function openCoach({ workoutId = null, prompt = "" } = {}) {
+  app.coachWorkoutId = workoutId;
+  els["coach-panel"].hidden = false;
+  els["coach-fab"].setAttribute("aria-expanded", "true");
+  const workout = workoutId ? app.workouts.find((candidate) => candidate.id === workoutId) : null;
+  els["coach-context-label"].textContent = workout ? `Workout context: ${formatDate(workout.started_at)}` : "Dashboard context";
+  if (prompt) els["coach-input"].value = prompt;
+  renderCoachMessages();
+  window.requestAnimationFrame(() => els["coach-input"].focus());
+}
+
+function closeCoach() {
+  els["coach-panel"].hidden = true;
+  els["coach-fab"].setAttribute("aria-expanded", "false");
+  app.coachWorkoutId = null;
+  setCoachStatus("");
+}
+
+async function sendCoachMessage(event) {
+  event.preventDefault();
+  if (app.coachBusy) return;
+  const message = els["coach-input"].value.trim();
+  if (!message) return;
+  app.coachBusy = true;
+  els["coach-send-button"].disabled = true;
+  els["coach-input"].value = "";
+  app.coachMessages.push({ role: "user", content: message, workout_id: app.coachWorkoutId, scope: app.coachWorkoutId ? "workout" : "dashboard" });
+  renderCoachMessages();
+  setCoachStatus("Thinking...");
+  try {
+    const { data, error } = await app.supabase.functions.invoke("running-coach", {
+      body: {
+        message,
+        workoutId: app.coachWorkoutId,
+        scope: app.coachWorkoutId ? "workout" : "dashboard"
+      }
+    });
+    if (error || data?.error || !data?.answer) throw new Error("coach_unavailable");
+    app.coachMessages.push({ role: "assistant", content: data.answer, workout_id: app.coachWorkoutId, scope: app.coachWorkoutId ? "workout" : "dashboard" });
+    renderCoachMessages();
+    setCoachStatus("");
+  } catch (_error) {
+    app.coachMessages.push({ role: "system", content: "Coach is unavailable right now." });
+    renderCoachMessages();
+    setCoachStatus("");
+  } finally {
+    app.coachBusy = false;
+    els["coach-send-button"].disabled = false;
+  }
+}
+
+async function clearCoachHistory() {
+  if (!confirm("Clear your coach conversation history and saved coach memory?")) return;
+  app.coachMessages = [];
+  renderCoachMessages();
+  setCoachStatus("Clearing...");
+  try {
+    const { data, error } = await app.supabase.functions.invoke("running-coach", {
+      body: { action: "clear" }
+    });
+    if (error || data?.error) throw new Error("coach_clear_failed");
+    setCoachStatus("Coach history cleared.");
+  } catch (_error) {
+    setCoachStatus("Coach is unavailable right now.");
+  }
+}
+
+function renderCoachMessages() {
+  if (!els["coach-messages"]) return;
+  const visible = app.coachMessages.slice(-20);
+  els["coach-messages"].innerHTML = visible.length
+    ? visible.map((message) => `<div class="coach-message is-${message.role === "assistant" ? "assistant" : message.role === "user" ? "user" : "system"}">${escapeHtml(message.content || "")}</div>`).join("")
+    : `<div class="coach-message is-system">Ask about interval pace, heart-rate trends, Zone 5 time, consistency, or what to watch on the next run.</div>`;
+  els["coach-messages"].scrollTop = els["coach-messages"].scrollHeight;
+}
+
+function setCoachStatus(message) {
+  if (els["coach-status"]) els["coach-status"].textContent = message || "";
 }
 
 function authStorageKey() {
