@@ -987,12 +987,13 @@ async function coachAuthHeaders() {
   const { data } = await app.supabase.auth.getSession();
   app.session = data?.session || app.session;
   app.user = app.session?.user || app.user;
-  return app.session?.access_token ? {
+  if (!app.session?.access_token) throw new Error("missing_session");
+  return {
     authorization: `Bearer ${config.supabaseAnonKey}`,
     apikey: config.supabaseAnonKey,
     "x-running-access-token": app.session.access_token,
     "content-type": "application/json"
-  } : {};
+  };
 }
 
 async function invokeCoach(body) {
@@ -1002,7 +1003,10 @@ async function invokeCoach(body) {
     body: JSON.stringify(body)
   });
   const data = await response.json().catch(() => null);
-  return { data, error: response.ok ? null : data || { error: "Coach is unavailable right now." } };
+  return {
+    data,
+    error: response.ok ? null : data || { error: "Coach is unavailable right now.", code: `http_${response.status}` }
+  };
 }
 
 function safeClientErrorCode(error) {
